@@ -606,6 +606,56 @@ export type Database = {
           },
         ]
       }
+      plan_requests: {
+        Row: {
+          admin_note: string | null
+          amount: number
+          created_at: string
+          id: string
+          method: string
+          outlet_id: string
+          proof_url: string | null
+          requested_plan: string
+          status: string
+          transaction_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          admin_note?: string | null
+          amount?: number
+          created_at?: string
+          id?: string
+          method: string
+          outlet_id: string
+          proof_url?: string | null
+          requested_plan: string
+          status?: string
+          transaction_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          admin_note?: string | null
+          amount?: number
+          created_at?: string
+          id?: string
+          method?: string
+          outlet_id?: string
+          proof_url?: string | null
+          requested_plan?: string
+          status?: string
+          transaction_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "plan_requests_outlet_id_fkey"
+            columns: ["outlet_id"]
+            isOneToOne: false
+            referencedRelation: "outlets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       platform_settings: {
         Row: {
           basic_enable_delivery: boolean
@@ -697,6 +747,7 @@ export type Database = {
           demo_start_date: string | null
           id: string
           outlet_id: string
+          paid_until: string | null
           plan: Database["public"]["Enums"]["subscription_plan"]
           status: Database["public"]["Enums"]["subscription_status"]
           updated_at: string
@@ -707,6 +758,7 @@ export type Database = {
           demo_start_date?: string | null
           id?: string
           outlet_id: string
+          paid_until?: string | null
           plan?: Database["public"]["Enums"]["subscription_plan"]
           status?: Database["public"]["Enums"]["subscription_status"]
           updated_at?: string
@@ -717,6 +769,7 @@ export type Database = {
           demo_start_date?: string | null
           id?: string
           outlet_id?: string
+          paid_until?: string | null
           plan?: Database["public"]["Enums"]["subscription_plan"]
           status?: Database["public"]["Enums"]["subscription_status"]
           updated_at?: string
