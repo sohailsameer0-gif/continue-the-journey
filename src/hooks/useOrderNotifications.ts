@@ -160,6 +160,50 @@ export function useOrderNotifications(outletId?: string) {
     queryClient.invalidateQueries({ queryKey: ['orders'] });
   }, [queryClient]);
 
+  // Customer submitted a payment (cash OR online) — notify outlet so they can verify.
+  const handlePaymentSubmitted = useCallback((payload: any) => {
+    if (isFirstLoad.current) return;
+    const p = payload.new;
+    if (!p) return;
+
+    // Only notify on rows that need outlet action:
+    //  - cash with status 'unpaid' (awaiting cash collection / verification)
+    //  - online with status 'pending_verification' (proof to verify)
+    const isCashAwaiting = p.method === 'cash' && p.status === 'unpaid';
+    const isOnlineAwaiting = p.method && p.method !== 'cash' && p.status === 'pending_verification';
+    if (!isCashAwaiting && !isOnlineAwaiting) return;
+
+    playNotificationSound();
+
+    if (isCashAwaiting) {
+      const modeLabel = p.cash_handling_mode === 'waiter'
+        ? 'Customer chose Pay via Waiter'
+        : p.cash_handling_mode === 'counter'
+          ? 'Customer will pay at counter'
+          : 'Cash on Delivery selected';
+      toast.info('💵 Cash payment to verify', {
+        description: `${modeLabel} • Rs.${Number(p.amount || 0).toLocaleString()}`,
+        duration: 8000,
+        action: {
+          label: 'View Orders',
+          onClick: () => { window.location.pathname = '/outlet/orders'; },
+        },
+      });
+    } else {
+      toast.info('💳 Online payment proof submitted', {
+        description: `Rs.${Number(p.amount || 0).toLocaleString()} — verify in Payments`,
+        duration: 8000,
+        action: {
+          label: 'Verify',
+          onClick: () => { window.location.pathname = '/outlet/payments'; },
+        },
+      });
+    }
+
+    queryClient.invalidateQueries({ queryKey: ['orders'] });
+    queryClient.invalidateQueries({ queryKey: ['outlet', 'notifications'] });
+  }, [queryClient]);
+
   useEffect(() => {
     if (!outletId) return;
 
@@ -208,12 +252,28 @@ export function useOrderNotifications(outletId?: string) {
       )
       .subscribe();
 
+    // Subscribe to payment submissions (cash + online)
+    const paymentsChannel = supabase
+      .channel(`realtime-payments-${outletId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'payments',
+          filter: `outlet_id=eq.${outletId}`,
+        },
+        handlePaymentSubmitted
+      )
+      .subscribe();
+
     return () => {
       clearTimeout(timer);
       supabase.removeChannel(ordersChannel);
       supabase.removeChannel(billChannel);
+      supabase.removeChannel(paymentsChannel);
     };
-  }, [outletId, handleNewOrder, handleOrderUpdate, handleBillRequest]);
+  }, [outletId, handleNewOrder, handleOrderUpdate, handleBillRequest, handlePaymentSubmitted]);
 
   return { pendingCount: pendingOrderIds.size };
 }
