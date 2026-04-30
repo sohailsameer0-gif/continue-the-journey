@@ -50,6 +50,54 @@ export type Database = {
         }
         Relationships: []
       }
+      admin_payment_methods: {
+        Row: {
+          account_number: string | null
+          account_title: string | null
+          bank_name: string | null
+          created_at: string
+          iban: string | null
+          id: string
+          instructions: string | null
+          is_active: boolean
+          label: string
+          qr_image_url: string | null
+          sort_order: number
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          account_number?: string | null
+          account_title?: string | null
+          bank_name?: string | null
+          created_at?: string
+          iban?: string | null
+          id?: string
+          instructions?: string | null
+          is_active?: boolean
+          label: string
+          qr_image_url?: string | null
+          sort_order?: number
+          type?: string
+          updated_at?: string
+        }
+        Update: {
+          account_number?: string | null
+          account_title?: string | null
+          bank_name?: string | null
+          created_at?: string
+          iban?: string | null
+          id?: string
+          instructions?: string | null
+          is_active?: boolean
+          label?: string
+          qr_image_url?: string | null
+          sort_order?: number
+          type?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       bill_requests: {
         Row: {
           created_at: string
@@ -224,6 +272,10 @@ export type Database = {
       }
       orders: {
         Row: {
+          cancellation_reason: string | null
+          cancellation_reason_text: string | null
+          cancelled_at: string | null
+          cancelled_by: string | null
           created_at: string
           customer_address: string | null
           customer_name: string | null
@@ -236,6 +288,7 @@ export type Database = {
           payment_method: Database["public"]["Enums"]["payment_method"] | null
           payment_status: Database["public"]["Enums"]["payment_status"]
           pickup_time: string | null
+          rider_id: string | null
           service_charge: number | null
           session_id: string | null
           special_instructions: string | null
@@ -247,8 +300,13 @@ export type Database = {
           transaction_id: string | null
           updated_at: string
           vehicle_number: string | null
+          waiter_id: string | null
         }
         Insert: {
+          cancellation_reason?: string | null
+          cancellation_reason_text?: string | null
+          cancelled_at?: string | null
+          cancelled_by?: string | null
           created_at?: string
           customer_address?: string | null
           customer_name?: string | null
@@ -261,6 +319,7 @@ export type Database = {
           payment_method?: Database["public"]["Enums"]["payment_method"] | null
           payment_status?: Database["public"]["Enums"]["payment_status"]
           pickup_time?: string | null
+          rider_id?: string | null
           service_charge?: number | null
           session_id?: string | null
           special_instructions?: string | null
@@ -272,8 +331,13 @@ export type Database = {
           transaction_id?: string | null
           updated_at?: string
           vehicle_number?: string | null
+          waiter_id?: string | null
         }
         Update: {
+          cancellation_reason?: string | null
+          cancellation_reason_text?: string | null
+          cancelled_at?: string | null
+          cancelled_by?: string | null
           created_at?: string
           customer_address?: string | null
           customer_name?: string | null
@@ -286,6 +350,7 @@ export type Database = {
           payment_method?: Database["public"]["Enums"]["payment_method"] | null
           payment_status?: Database["public"]["Enums"]["payment_status"]
           pickup_time?: string | null
+          rider_id?: string | null
           service_charge?: number | null
           session_id?: string | null
           special_instructions?: string | null
@@ -297,6 +362,7 @@ export type Database = {
           transaction_id?: string | null
           updated_at?: string
           vehicle_number?: string | null
+          waiter_id?: string | null
         }
         Relationships: [
           {
@@ -307,13 +373,161 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "orders_rider_id_fkey"
+            columns: ["rider_id"]
+            isOneToOne: false
+            referencedRelation: "outlet_staff"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "orders_table_id_fkey"
             columns: ["table_id"]
             isOneToOne: false
             referencedRelation: "tables"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "orders_waiter_id_fkey"
+            columns: ["waiter_id"]
+            isOneToOne: false
+            referencedRelation: "outlet_staff"
+            referencedColumns: ["id"]
+          },
         ]
+      }
+      outlet_access: {
+        Row: {
+          approved_at: string | null
+          approved_by: string | null
+          blocked_at: string | null
+          created_at: string
+          id: string
+          last_password_changed_at: string | null
+          otp_attempts: number
+          otp_code_hash: string | null
+          otp_expires_at: string | null
+          otp_max_attempts: number
+          otp_plain_for_admin: string | null
+          outlet_id: string
+          rejected_reason: string | null
+          status: Database["public"]["Enums"]["outlet_access_status"]
+          updated_at: string
+          verified_at: string | null
+        }
+        Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
+          blocked_at?: string | null
+          created_at?: string
+          id?: string
+          last_password_changed_at?: string | null
+          otp_attempts?: number
+          otp_code_hash?: string | null
+          otp_expires_at?: string | null
+          otp_max_attempts?: number
+          otp_plain_for_admin?: string | null
+          outlet_id: string
+          rejected_reason?: string | null
+          status?: Database["public"]["Enums"]["outlet_access_status"]
+          updated_at?: string
+          verified_at?: string | null
+        }
+        Update: {
+          approved_at?: string | null
+          approved_by?: string | null
+          blocked_at?: string | null
+          created_at?: string
+          id?: string
+          last_password_changed_at?: string | null
+          otp_attempts?: number
+          otp_code_hash?: string | null
+          otp_expires_at?: string | null
+          otp_max_attempts?: number
+          otp_plain_for_admin?: string | null
+          outlet_id?: string
+          rejected_reason?: string | null
+          status?: Database["public"]["Enums"]["outlet_access_status"]
+          updated_at?: string
+          verified_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "outlet_access_outlet_id_fkey"
+            columns: ["outlet_id"]
+            isOneToOne: true
+            referencedRelation: "outlets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      outlet_activity_resets: {
+        Row: {
+          cleared_types: string[]
+          counts: Json
+          created_at: string
+          id: string
+          outlet_id: string
+          reason: string
+          reset_by: string | null
+          reset_by_email: string | null
+        }
+        Insert: {
+          cleared_types?: string[]
+          counts?: Json
+          created_at?: string
+          id?: string
+          outlet_id: string
+          reason: string
+          reset_by?: string | null
+          reset_by_email?: string | null
+        }
+        Update: {
+          cleared_types?: string[]
+          counts?: Json
+          created_at?: string
+          id?: string
+          outlet_id?: string
+          reason?: string
+          reset_by?: string | null
+          reset_by_email?: string | null
+        }
+        Relationships: []
+      }
+      outlet_messages: {
+        Row: {
+          body: string
+          created_at: string
+          created_by: string | null
+          id: string
+          kind: string
+          metadata: Json
+          outlet_id: string
+          read_at: string | null
+          title: string
+        }
+        Insert: {
+          body?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          kind?: string
+          metadata?: Json
+          outlet_id: string
+          read_at?: string | null
+          title: string
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          kind?: string
+          metadata?: Json
+          outlet_id?: string
+          read_at?: string | null
+          title?: string
+        }
+        Relationships: []
       }
       outlet_settings: {
         Row: {
@@ -384,6 +598,50 @@ export type Database = {
             foreignKeyName: "outlet_settings_outlet_id_fkey"
             columns: ["outlet_id"]
             isOneToOne: true
+            referencedRelation: "outlets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      outlet_staff: {
+        Row: {
+          created_at: string
+          id: string
+          is_active: boolean
+          name: string
+          notes: string | null
+          outlet_id: string
+          phone: string | null
+          role: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name: string
+          notes?: string | null
+          outlet_id: string
+          phone?: string | null
+          role: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+          notes?: string | null
+          outlet_id?: string
+          phone?: string | null
+          role?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "outlet_staff_outlet_id_fkey"
+            columns: ["outlet_id"]
+            isOneToOne: false
             referencedRelation: "outlets"
             referencedColumns: ["id"]
           },
@@ -541,6 +799,56 @@ export type Database = {
           },
         ]
       }
+      plan_requests: {
+        Row: {
+          admin_note: string | null
+          amount: number
+          created_at: string
+          id: string
+          method: string
+          outlet_id: string
+          proof_url: string | null
+          requested_plan: string
+          status: string
+          transaction_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          admin_note?: string | null
+          amount?: number
+          created_at?: string
+          id?: string
+          method: string
+          outlet_id: string
+          proof_url?: string | null
+          requested_plan: string
+          status?: string
+          transaction_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          admin_note?: string | null
+          amount?: number
+          created_at?: string
+          id?: string
+          method?: string
+          outlet_id?: string
+          proof_url?: string | null
+          requested_plan?: string
+          status?: string
+          transaction_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "plan_requests_outlet_id_fkey"
+            columns: ["outlet_id"]
+            isOneToOne: false
+            referencedRelation: "outlets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       platform_settings: {
         Row: {
           basic_enable_delivery: boolean
@@ -565,6 +873,8 @@ export type Database = {
           standard_max_menu_items: number
           standard_max_tables: number
           standard_plan_price: number
+          support_email: string
+          support_whatsapp: string
           updated_at: string
         }
         Insert: {
@@ -590,6 +900,8 @@ export type Database = {
           standard_max_menu_items?: number
           standard_max_tables?: number
           standard_plan_price?: number
+          support_email?: string
+          support_whatsapp?: string
           updated_at?: string
         }
         Update: {
@@ -615,6 +927,8 @@ export type Database = {
           standard_max_menu_items?: number
           standard_max_tables?: number
           standard_plan_price?: number
+          support_email?: string
+          support_whatsapp?: string
           updated_at?: string
         }
         Relationships: []
@@ -626,6 +940,7 @@ export type Database = {
           demo_start_date: string | null
           id: string
           outlet_id: string
+          paid_until: string | null
           plan: Database["public"]["Enums"]["subscription_plan"]
           status: Database["public"]["Enums"]["subscription_status"]
           updated_at: string
@@ -636,6 +951,7 @@ export type Database = {
           demo_start_date?: string | null
           id?: string
           outlet_id: string
+          paid_until?: string | null
           plan?: Database["public"]["Enums"]["subscription_plan"]
           status?: Database["public"]["Enums"]["subscription_status"]
           updated_at?: string
@@ -646,6 +962,7 @@ export type Database = {
           demo_start_date?: string | null
           id?: string
           outlet_id?: string
+          paid_until?: string | null
           plan?: Database["public"]["Enums"]["subscription_plan"]
           status?: Database["public"]["Enums"]["subscription_status"]
           updated_at?: string
@@ -721,6 +1038,28 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      _gen_otp_code: { Args: never; Returns: string }
+      admin_approve_outlet: { Args: { _outlet_id: string }; Returns: Json }
+      admin_approve_plan_request: {
+        Args: { _admin_note?: string; _request_id: string }
+        Returns: Json
+      }
+      admin_regenerate_outlet_otp: {
+        Args: { _outlet_id: string }
+        Returns: Json
+      }
+      admin_reject_outlet: {
+        Args: { _outlet_id: string; _reason?: string }
+        Returns: Json
+      }
+      admin_reject_plan_request: {
+        Args: { _admin_note?: string; _request_id: string }
+        Returns: Json
+      }
+      admin_reset_outlet_activity: {
+        Args: { _outlet_id: string; _reason: string; _types: string[] }
+        Returns: Json
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -728,6 +1067,9 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_outlet_active: { Args: { _outlet_id: string }; Returns: boolean }
+      owns_active_outlet: { Args: { _outlet_id: string }; Returns: boolean }
+      verify_outlet_otp: { Args: { _code: string }; Returns: Json }
     }
     Enums: {
       app_role: "admin" | "outlet_owner"
@@ -749,7 +1091,14 @@ export type Database = {
         | "picked_up"
         | "out_for_delivery"
         | "delivered"
+        | "cancelled"
       order_type: "dine_in" | "takeaway" | "delivery"
+      outlet_access_status:
+        | "pending"
+        | "approved"
+        | "rejected"
+        | "verified"
+        | "blocked"
       outlet_approval_status: "pending" | "approved" | "rejected"
       payment_method: "cash" | "bank_transfer" | "jazzcash" | "easypaisa"
       payment_status: "unpaid" | "pending_verification" | "paid" | "rejected"
@@ -902,8 +1251,16 @@ export const Constants = {
         "picked_up",
         "out_for_delivery",
         "delivered",
+        "cancelled",
       ],
       order_type: ["dine_in", "takeaway", "delivery"],
+      outlet_access_status: [
+        "pending",
+        "approved",
+        "rejected",
+        "verified",
+        "blocked",
+      ],
       outlet_approval_status: ["pending", "approved", "rejected"],
       payment_method: ["cash", "bank_transfer", "jazzcash", "easypaisa"],
       payment_status: ["unpaid", "pending_verification", "paid", "rejected"],
