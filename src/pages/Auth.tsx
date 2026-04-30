@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/lib/auth';
-import { lovable } from '@/integrations/lovable';
+import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -42,17 +42,16 @@ export default function Auth() {
   const handleGoogleSignIn = async () => {
     setGoogleLoading(true);
     try {
-      const result = await lovable.auth.signInWithOAuth('google', {
-        redirect_uri: `${window.location.origin}/auth/callback`,
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: { redirectTo: `${window.location.origin}/auth/callback` },
       });
-
-      if (result.error) {
-        console.error('[GoogleSignIn] error:', result.error);
-        toast.error(result.error.message || 'Google sign-in failed');
+      if (error) {
+        console.error('[GoogleSignIn] error:', error);
+        toast.error(error.message || 'Google sign-in failed');
         return;
       }
-      if (result.redirected) return; // browser is redirecting to Google
-      // Tokens received & session set — useEffect handles role-based redirect
+      // Browser is redirecting to Google
     } catch (err: any) {
       console.error('[GoogleSignIn] exception:', err);
       toast.error(err?.message || 'Google sign-in failed');
