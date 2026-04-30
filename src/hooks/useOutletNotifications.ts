@@ -73,11 +73,12 @@ export function useOutletNotifications(outletId?: string) {
       // NOTE: Order notifications are intentionally NOT shown in the bell icon.
       // Orders have their own counter + sound system in the Orders dashboard.
       const since7d = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
-      const [subRes, reqRes, msgRes, paymentRes, billRes] = await Promise.all([
+      const [subRes, reqRes, msgRes, paymentRes, cashRes, billRes] = await Promise.all([
         supabase.from('subscriptions').select('id, plan, status, paid_until, demo_end_date, updated_at').eq('outlet_id', outletId!).maybeSingle(),
         supabase.from('plan_requests').select('id, requested_plan, status, admin_note, updated_at').eq('outlet_id', outletId!).in('status', ['approved', 'rejected']).gte('updated_at', since14d).order('updated_at', { ascending: false }).limit(20),
         (supabase as any).from('outlet_messages').select('id, kind, title, body, created_at, read_at').eq('outlet_id', outletId!).gte('created_at', since14d).order('created_at', { ascending: false }).limit(30),
         supabase.from('payments').select('id, amount, method, created_at, order_id').eq('outlet_id', outletId!).eq('status', 'pending_verification').gte('created_at', since7d).order('created_at', { ascending: false }).limit(30),
+        supabase.from('payments').select('id, amount, method, cash_handling_mode, created_at, order_id, orders(order_type)').eq('outlet_id', outletId!).eq('method', 'cash').eq('status', 'unpaid').gte('created_at', since7d).order('created_at', { ascending: false }).limit(30),
         supabase.from('bill_requests').select('id, order_id, status, created_at, orders!inner(outlet_id, customer_name, table_id, tables(table_number))').eq('orders.outlet_id', outletId!).eq('status', 'pending').gte('created_at', since7d).order('created_at', { ascending: false }).limit(30),
       ]);
 
@@ -131,6 +132,26 @@ export function useOutletNotifications(outletId?: string) {
           description: `${methodLabel} · Rs. ${Number(p.amount || 0).toLocaleString()} — customer ne payment proof submit kiya hai`,
           createdAt: p.created_at,
           href: '/outlet/payments',
+          unread: true,
+        });
+      });
+
+      (cashRes.data ?? []).forEach((p: any) => {
+        const ot = p.orders?.order_type;
+        const modeLabel = ot === 'delivery'
+          ? 'Cash on Delivery'
+          : p.cash_handling_mode === 'waiter'
+            ? 'Cash via Waiter'
+            : p.cash_handling_mode === 'counter'
+              ? 'Cash at Counter'
+              : 'Cash payment';
+        list.push({
+          id: `cash_pending:${p.id}`,
+          kind: 'payment_pending_verification',
+          title: '💵 Cash payment to confirm',
+          description: `${modeLabel} · Rs. ${Number(p.amount || 0).toLocaleString()} — staff verification needed`,
+          createdAt: p.created_at,
+          href: '/outlet/orders',
           unread: true,
         });
       });
