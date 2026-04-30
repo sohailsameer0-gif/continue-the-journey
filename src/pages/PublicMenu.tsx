@@ -42,6 +42,31 @@ export default function PublicMenu() {
   });
   const [showTracking, setShowTracking] = useState(false);
 
+  // Track the address (and name/phone) of the FIRST delivery order so we can
+  // decide whether a follow-up delivery from the same customer should be
+  // charged again. Same address = no extra delivery charge. Changed address =
+  // delivery fee applies again.
+  const prevDeliveryKey = `prev-delivery-${slug || ''}`;
+  const [prevDelivery, setPrevDelivery] = useState<{
+    name?: string; phone?: string; address?: string; locationLink?: string;
+  } | null>(() => {
+    try {
+      const raw = sessionStorage.getItem(prevDeliveryKey);
+      return raw ? JSON.parse(raw) : null;
+    } catch { return null; }
+  });
+
+  // Pre-fill customer info on first render if we have a previous delivery on file.
+  useEffect(() => {
+    if (prevDelivery && !customerName && !customerPhone && !customerAddress) {
+      if (prevDelivery.name) setCustomerName(prevDelivery.name);
+      if (prevDelivery.phone) setCustomerPhone(prevDelivery.phone);
+      if (prevDelivery.address) setCustomerAddress(prevDelivery.address);
+      if (prevDelivery.locationLink) setLocationLink(prevDelivery.locationLink);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   useEffect(() => {
     if (orderIds.length > 0) {
       sessionStorage.setItem(storageKey, JSON.stringify(orderIds));
@@ -109,11 +134,20 @@ export default function PublicMenu() {
   const cartCount = cart.reduce((s, i) => s + i.quantity, 0);
 
   // Calculate charges based on order type
-  // IMPORTANT: Delivery charge applies ONLY ONCE per active session.
-  // If customer already has an active delivery order in this session, additional
-  // orders in the same delivery flow do NOT add another delivery fee.
-  const isAdditionalDeliveryInSession = orderType === 'delivery' && orderIds.length > 0;
-  const deliveryChargesForOrder = orderType === 'delivery' && !isAdditionalDeliveryInSession ? outletDeliveryCharges : 0;
+  // IMPORTANT: Delivery charge applies ONLY ONCE per delivery address.
+  //  - First delivery order → charge applies.
+  //  - Additional orders to the SAME address (same name/phone same trip) → no extra fee.
+  //  - If the customer changes the delivery address for a follow-up order → charge applies again.
+  const normalizeAddr = (s?: string) => (s || '').trim().toLowerCase().replace(/\s+/g, ' ');
+  const sameAddressAsPrevious = !!(
+    prevDelivery &&
+    prevDelivery.address &&
+    normalizeAddr(prevDelivery.address) === normalizeAddr(customerAddress)
+  );
+  const isAdditionalDeliveryInSession =
+    orderType === 'delivery' && orderIds.length > 0 && sameAddressAsPrevious;
+  const deliveryChargesForOrder =
+    orderType === 'delivery' && !isAdditionalDeliveryInSession ? outletDeliveryCharges : 0;
   const taxPercentage = Number(outletSettings?.tax_rate) || 0;
   const serviceChargePercentage = Number(outletSettings?.service_charge_rate) || 0;
   // Dine-in: tax/service are computed on the FINAL outlet bill, not at order placement.
@@ -158,6 +192,16 @@ export default function PublicMenu() {
       setCart([]);
       setShowCart(false);
       setOrderNotes('');
+      // Remember the delivery address used so additional rounds to the same
+      // address skip the delivery fee.
+      if (orderType === 'delivery') {
+        const snapshot = {
+          name: customerName, phone: customerPhone,
+          address: customerAddress, locationLink,
+        };
+        setPrevDelivery(snapshot);
+        try { sessionStorage.setItem(prevDeliveryKey, JSON.stringify(snapshot)); } catch { /* ignore */ }
+      }
       toast.success(orderIds.length > 0 ? 'Additional order placed!' : 'Order placed successfully!');
     } catch (err: any) {
       toast.error(err.message || 'Failed to place order');
