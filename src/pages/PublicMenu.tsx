@@ -257,6 +257,8 @@ export default function PublicMenu() {
         onAllClosed={() => {
           setOrderIds([]);
           sessionStorage.removeItem(storageKey);
+          sessionStorage.removeItem(prevDeliveryKey);
+          setPrevDelivery(null);
           setShowTracking(false);
         }}
       />
