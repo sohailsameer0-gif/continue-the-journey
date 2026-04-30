@@ -27,6 +27,8 @@ export default function MenuManagement() {
   const [catName, setCatName] = useState('');
   const [showAddItem, setShowAddItem] = useState(false);
   const [itemForm, setItemForm] = useState({ name: '', price: '', description: '', category_id: '', discounted_price: '', tags: [] as string[], image_url: '' });
+  const [editItem, setEditItem] = useState<any | null>(null);
+  const [editForm, setEditForm] = useState({ name: '', price: '', description: '', category_id: '', discounted_price: '', tags: [] as string[], image_url: '' });
 
   const itemLimit = sub?.limits?.maxMenuItems ?? 0; // 0 = unlimited
   const currentCount = items?.length ?? 0;
@@ -69,6 +71,45 @@ export default function MenuManagement() {
       ...f,
       tags: f.tags.includes(tag) ? f.tags.filter(t => t !== tag) : [...f.tags, tag],
     }));
+  };
+
+  const toggleEditTag = (tag: string) => {
+    setEditForm(f => ({
+      ...f,
+      tags: f.tags.includes(tag) ? f.tags.filter(t => t !== tag) : [...f.tags, tag],
+    }));
+  };
+
+  const openEdit = (item: any) => {
+    setEditItem(item);
+    setEditForm({
+      name: item.name || '',
+      price: String(item.price ?? ''),
+      description: item.description || '',
+      category_id: item.category_id || '',
+      discounted_price: item.discounted_price != null ? String(item.discounted_price) : '',
+      tags: Array.isArray(item.tags) ? item.tags : [],
+      image_url: item.image_url || '',
+    });
+  };
+
+  const handleEditItem = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editItem) return;
+    try {
+      await updateItem.mutateAsync({
+        id: editItem.id,
+        name: editForm.name,
+        price: Number(editForm.price),
+        description: editForm.description || '',
+        category_id: editForm.category_id,
+        discounted_price: editForm.discounted_price ? Number(editForm.discounted_price) : null,
+        tags: editForm.tags,
+        image_url: editForm.image_url || '',
+      });
+      setEditItem(null);
+      toast.success('Item updated!');
+    } catch (err: any) { toast.error(err.message); }
   };
 
   return (
@@ -207,6 +248,13 @@ export default function MenuManagement() {
                       {!isLocked && (
                         <div className="flex items-center gap-2 shrink-0">
                           <Switch checked={item.is_available ?? true} onCheckedChange={v => updateItem.mutate({ id: item.id, is_available: v })} />
+                          <button
+                            onClick={() => openEdit(item)}
+                            className="p-1.5 rounded hover:bg-primary/10 text-muted-foreground hover:text-primary"
+                            title="Edit item"
+                          >
+                            <Edit className="h-4 w-4" />
+                          </button>
                           <button onClick={() => { deleteItem.mutate(item.id); toast.success('Deleted'); }} className="p-1.5 rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive">
                             <Trash2 className="h-4 w-4" />
                           </button>
@@ -220,6 +268,62 @@ export default function MenuManagement() {
           );
         })}
       </div>
+
+      {/* Edit Item Dialog */}
+      <Dialog open={!!editItem} onOpenChange={(v) => !v && setEditItem(null)}>
+        <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
+          <DialogHeader><DialogTitle className="font-heading">Edit Menu Item</DialogTitle></DialogHeader>
+          <form onSubmit={handleEditItem} className="space-y-4">
+            <div className="space-y-2">
+              <Label>Item Name *</Label>
+              <Input value={editForm.name} onChange={e => setEditForm(f => ({ ...f, name: e.target.value }))} required />
+            </div>
+            <div className="space-y-2">
+              <Label>Category *</Label>
+              <Select value={editForm.category_id} onValueChange={v => setEditForm(f => ({ ...f, category_id: v }))}>
+                <SelectTrigger><SelectValue placeholder="Select category" /></SelectTrigger>
+                <SelectContent>{categories?.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}</SelectContent>
+              </Select>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <Label>Price (PKR) *</Label>
+                <Input type="number" value={editForm.price} onChange={e => setEditForm(f => ({ ...f, price: e.target.value }))} required min="0" />
+              </div>
+              <div className="space-y-2">
+                <Label>Sale Price</Label>
+                <Input type="number" value={editForm.discounted_price} onChange={e => setEditForm(f => ({ ...f, discounted_price: e.target.value }))} min="0" placeholder="optional" />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label>Description</Label>
+              <Input value={editForm.description} onChange={e => setEditForm(f => ({ ...f, description: e.target.value }))} />
+            </div>
+            <div className="space-y-2">
+              <Label>Item Image</Label>
+              <MenuItemImageUpload
+                value={editForm.image_url || undefined}
+                onChange={url => setEditForm(f => ({ ...f, image_url: url || '' }))}
+                outletId={outlet.id}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Tags</Label>
+              <div className="flex gap-2">
+                {['popular', 'spicy', 'new'].map(tag => (
+                  <Badge key={tag} variant={editForm.tags.includes(tag) ? 'default' : 'outline'} className="cursor-pointer" onClick={() => toggleEditTag(tag)}>{tag}</Badge>
+                ))}
+              </div>
+            </div>
+            <div className="flex gap-2">
+              <Button type="button" variant="outline" className="flex-1" onClick={() => setEditItem(null)}>Cancel</Button>
+              <Button type="submit" className="flex-1" variant="hero" disabled={updateItem.isPending}>
+                {updateItem.isPending ? 'Saving...' : 'Save Changes'}
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
