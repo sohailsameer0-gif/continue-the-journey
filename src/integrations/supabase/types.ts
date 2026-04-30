@@ -315,6 +315,71 @@ export type Database = {
           },
         ]
       }
+      outlet_access: {
+        Row: {
+          approved_at: string | null
+          approved_by: string | null
+          blocked_at: string | null
+          created_at: string
+          id: string
+          last_password_changed_at: string | null
+          otp_attempts: number
+          otp_code_hash: string | null
+          otp_expires_at: string | null
+          otp_max_attempts: number
+          otp_plain_for_admin: string | null
+          outlet_id: string
+          rejected_reason: string | null
+          status: Database["public"]["Enums"]["outlet_access_status"]
+          updated_at: string
+          verified_at: string | null
+        }
+        Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
+          blocked_at?: string | null
+          created_at?: string
+          id?: string
+          last_password_changed_at?: string | null
+          otp_attempts?: number
+          otp_code_hash?: string | null
+          otp_expires_at?: string | null
+          otp_max_attempts?: number
+          otp_plain_for_admin?: string | null
+          outlet_id: string
+          rejected_reason?: string | null
+          status?: Database["public"]["Enums"]["outlet_access_status"]
+          updated_at?: string
+          verified_at?: string | null
+        }
+        Update: {
+          approved_at?: string | null
+          approved_by?: string | null
+          blocked_at?: string | null
+          created_at?: string
+          id?: string
+          last_password_changed_at?: string | null
+          otp_attempts?: number
+          otp_code_hash?: string | null
+          otp_expires_at?: string | null
+          otp_max_attempts?: number
+          otp_plain_for_admin?: string | null
+          outlet_id?: string
+          rejected_reason?: string | null
+          status?: Database["public"]["Enums"]["outlet_access_status"]
+          updated_at?: string
+          verified_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "outlet_access_outlet_id_fkey"
+            columns: ["outlet_id"]
+            isOneToOne: true
+            referencedRelation: "outlets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       outlet_settings: {
         Row: {
           bank_account_number: string | null
@@ -721,6 +786,16 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      _gen_otp_code: { Args: never; Returns: string }
+      admin_approve_outlet: { Args: { _outlet_id: string }; Returns: Json }
+      admin_regenerate_outlet_otp: {
+        Args: { _outlet_id: string }
+        Returns: Json
+      }
+      admin_reject_outlet: {
+        Args: { _outlet_id: string; _reason?: string }
+        Returns: Json
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -728,6 +803,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      verify_outlet_otp: { Args: { _code: string }; Returns: Json }
     }
     Enums: {
       app_role: "admin" | "outlet_owner"
@@ -750,6 +826,12 @@ export type Database = {
         | "out_for_delivery"
         | "delivered"
       order_type: "dine_in" | "takeaway" | "delivery"
+      outlet_access_status:
+        | "pending"
+        | "approved"
+        | "rejected"
+        | "verified"
+        | "blocked"
       outlet_approval_status: "pending" | "approved" | "rejected"
       payment_method: "cash" | "bank_transfer" | "jazzcash" | "easypaisa"
       payment_status: "unpaid" | "pending_verification" | "paid" | "rejected"
@@ -904,6 +986,13 @@ export const Constants = {
         "delivered",
       ],
       order_type: ["dine_in", "takeaway", "delivery"],
+      outlet_access_status: [
+        "pending",
+        "approved",
+        "rejected",
+        "verified",
+        "blocked",
+      ],
       outlet_approval_status: ["pending", "approved", "rejected"],
       payment_method: ["cash", "bank_transfer", "jazzcash", "easypaisa"],
       payment_status: ["unpaid", "pending_verification", "paid", "rejected"],
