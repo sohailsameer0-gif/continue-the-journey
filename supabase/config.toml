@@ -1,1 +1,5 @@
 project_id = "vcgavmocndaidggmtrmu"
+
+# Public endpoint — customer (no JWT) submits payment proof
+[functions.submit-payment-proof]
+verify_jwt = false

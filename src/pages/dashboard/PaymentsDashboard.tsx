@@ -59,8 +59,25 @@ export default function PaymentsDashboard() {
       })));
     };
     fetch();
-    const interval = setInterval(fetch, 5000);
-    return () => clearInterval(interval);
+    const interval = setInterval(fetch, 15000);
+
+    // Realtime: instant refresh whenever a payment row or proof row changes
+    const channel = supabase
+      .channel(`outlet-payments-${outlet.id}`)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'payments', filter: `outlet_id=eq.${outlet.id}` }, () => {
+        fetch();
+        if (typeof window !== 'undefined') {
+          // light toast — only when a brand new pending proof arrives
+          // (fetch will re-render the list)
+        }
+      })
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'payment_proofs' }, () => fetch())
+      .subscribe();
+
+    return () => {
+      clearInterval(interval);
+      supabase.removeChannel(channel);
+    };
   }, [outlet?.id]);
 
   if (!outlet) return <p className="text-muted-foreground">Please set up your outlet first.</p>;
