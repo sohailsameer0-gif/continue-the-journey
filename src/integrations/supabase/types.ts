@@ -630,6 +630,8 @@ export type Database = {
           standard_max_menu_items: number
           standard_max_tables: number
           standard_plan_price: number
+          support_email: string
+          support_whatsapp: string
           updated_at: string
         }
         Insert: {
@@ -655,6 +657,8 @@ export type Database = {
           standard_max_menu_items?: number
           standard_max_tables?: number
           standard_plan_price?: number
+          support_email?: string
+          support_whatsapp?: string
           updated_at?: string
         }
         Update: {
@@ -680,6 +684,8 @@ export type Database = {
           standard_max_menu_items?: number
           standard_max_tables?: number
           standard_plan_price?: number
+          support_email?: string
+          support_whatsapp?: string
           updated_at?: string
         }
         Relationships: []
@@ -803,6 +809,8 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_outlet_active: { Args: { _outlet_id: string }; Returns: boolean }
+      owns_active_outlet: { Args: { _outlet_id: string }; Returns: boolean }
       verify_outlet_otp: { Args: { _code: string }; Returns: Json }
     }
     Enums: {
