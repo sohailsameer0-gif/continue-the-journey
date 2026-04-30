@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import { Bell, Crown, AlertTriangle, CheckCircle2, XCircle, CheckCheck, Eraser, Megaphone } from 'lucide-react';
+import { Bell, Crown, AlertTriangle, CheckCircle2, XCircle, CheckCheck, Eraser, Megaphone, CreditCard, Receipt } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -14,6 +14,8 @@ const KIND_ICON: Record<OutletNotificationKind, typeof Bell> = {
   plan_request_rejected: XCircle,
   activity_reset: Eraser,
   admin_message: Megaphone,
+  payment_pending_verification: CreditCard,
+  bill_requested: Receipt,
 };
 
 const KIND_COLOR: Record<OutletNotificationKind, string> = {
@@ -23,6 +25,8 @@ const KIND_COLOR: Record<OutletNotificationKind, string> = {
   plan_request_rejected: 'text-destructive bg-destructive/10',
   activity_reset: 'text-amber-600 bg-amber-50',
   admin_message: 'text-primary bg-primary/10',
+  payment_pending_verification: 'text-secondary bg-secondary/10',
+  bill_requested: 'text-primary bg-primary/10',
 };
 
 interface Props {
