@@ -52,7 +52,12 @@ export function getMergeKey(order: MergeableOrder): string | null {
 
   if (ot === 'dine_in') {
     if (!order.table_id) return null;
-    return `dine|${order.outlet_id || ''}|${order.table_id}|${order.session_id || 'no_session'}`;
+    // Strict per-visitor merge: a new customer at the same table gets a new
+    // session_id (set client-side per visit), so they never merge into the
+    // previous customer's bill. Legacy rows without session_id fall back to
+    // their own id so they never merge with anything else.
+    const sid = order.session_id || `__noSession__${order.id}`;
+    return `dine|${order.outlet_id || ''}|${order.table_id}|${sid}`;
   }
 
   if (ot === 'delivery' || ot === 'takeaway') {
