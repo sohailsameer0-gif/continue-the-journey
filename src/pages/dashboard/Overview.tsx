@@ -1,10 +1,11 @@
+import { useEffect, useState } from 'react';
 import { useOutlet, useMenuItems, useTables, useOrders } from '@/hooks/useData';
 import { useResolvedSubscription } from '@/hooks/useSubscription';
 import { PLAN_LABEL } from '@/lib/plans';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
-import { Store, UtensilsCrossed, TableProperties, ShoppingCart, AlertTriangle, ArrowRight, Crown } from 'lucide-react';
+import { Store, UtensilsCrossed, TableProperties, ShoppingCart, AlertTriangle, ArrowRight, Crown, X } from 'lucide-react';
 import SupportContactCard from '@/components/outlet/SupportContactCard';
 
 export default function DashboardOverview() {
@@ -15,6 +16,21 @@ export default function DashboardOverview() {
   const { data: tables } = useTables(outlet?.id);
   const { data: orders } = useOrders(outlet?.id);
   const navigate = useNavigate();
+
+  // Per-login dismissal: each subscription/plan banner shows ONCE per browser session.
+  // sessionStorage clears automatically on logout / browser close, so the banner
+  // re-appears next login — but won't re-pop on every dashboard visit.
+  const dismissKey = (kind: string) => `subBannerDismissed:${outlet?.id || 'x'}:${kind}`;
+  const [, force] = useState(0);
+  const isDismissed = (kind: string) => {
+    if (typeof window === 'undefined') return false;
+    return sessionStorage.getItem(dismissKey(kind)) === '1';
+  };
+  const dismiss = (kind: string) => {
+    try { sessionStorage.setItem(dismissKey(kind), '1'); } catch { /* ignore */ }
+    force(n => n + 1);
+  };
+  useEffect(() => { /* re-render on outlet change */ }, [outlet?.id]);
 
   if (isLoading) return <div className="animate-pulse space-y-4"><div className="h-32 rounded-xl bg-muted" /><div className="h-32 rounded-xl bg-muted" /></div>;
 
@@ -50,7 +66,7 @@ export default function DashboardOverview() {
         <p className="text-muted-foreground">Welcome back, {outlet.name}</p>
       </div>
 
-      {sub?.isDemo && sub.isExpired && (
+      {sub?.isDemo && sub.isExpired && !isDismissed('demo_expired') && (
         <Card className="border-destructive bg-destructive/5">
           <CardContent className="flex flex-col sm:flex-row items-start sm:items-center gap-3 py-4">
             <AlertTriangle className="h-5 w-5 text-destructive shrink-0" />
@@ -61,11 +77,14 @@ export default function DashboardOverview() {
             <Button variant="hero" size="sm" onClick={() => navigate('/outlet/subscribe')}>
               <Crown className="h-4 w-4 mr-1" /> Upgrade Now
             </Button>
+            <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" aria-label="Dismiss" onClick={() => dismiss('demo_expired')}>
+              <X className="h-4 w-4" />
+            </Button>
           </CardContent>
         </Card>
       )}
 
-      {sub?.isDemo && !sub.isExpired && (
+      {sub?.isDemo && !sub.isExpired && !isDismissed('demo_active') && (
         <Card className="border-primary/20 bg-accent">
           <CardContent className="flex flex-col sm:flex-row items-start sm:items-center gap-3 py-4">
             <div className="flex h-10 w-10 items-center justify-center rounded-full gradient-primary text-primary-foreground font-heading font-bold shrink-0">{sub.daysLeft}</div>
@@ -80,11 +99,14 @@ export default function DashboardOverview() {
             <Button size="sm" variant="outline" onClick={() => navigate('/outlet/subscribe')}>
               <Crown className="h-4 w-4 mr-1" /> Upgrade
             </Button>
+            <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" aria-label="Dismiss" onClick={() => dismiss('demo_active')}>
+              <X className="h-4 w-4" />
+            </Button>
           </CardContent>
         </Card>
       )}
 
-      {sub?.isPaid && (
+      {sub?.isPaid && !isDismissed('paid_active') && (
         <Card className="border-primary/20 bg-primary/5">
           <CardContent className="flex flex-col sm:flex-row items-start sm:items-center gap-3 py-4">
             <Crown className="h-5 w-5 text-primary shrink-0" />
@@ -101,11 +123,14 @@ export default function DashboardOverview() {
                 <Crown className="h-4 w-4 mr-1" /> Renew
               </Button>
             )}
+            <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" aria-label="Dismiss" onClick={() => dismiss('paid_active')}>
+              <X className="h-4 w-4" />
+            </Button>
           </CardContent>
         </Card>
       )}
 
-      {sub?.isPaidExpired && (
+      {sub?.isPaidExpired && !isDismissed('paid_expired') && (
         <Card className="border-destructive bg-destructive/5">
           <CardContent className="flex flex-col sm:flex-row items-start sm:items-center gap-3 py-4">
             <AlertTriangle className="h-5 w-5 text-destructive shrink-0" />
@@ -115,6 +140,9 @@ export default function DashboardOverview() {
             </div>
             <Button variant="hero" size="sm" onClick={() => navigate('/outlet/subscribe')}>
               <Crown className="h-4 w-4 mr-1" /> Renew Now
+            </Button>
+            <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" aria-label="Dismiss" onClick={() => dismiss('paid_expired')}>
+              <X className="h-4 w-4" />
             </Button>
           </CardContent>
         </Card>
