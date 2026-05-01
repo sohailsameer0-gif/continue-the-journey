@@ -109,6 +109,7 @@ export default function OrderTracking({ orderIds, outletName, orderType, outletS
   const [submitting, setSubmitting] = useState(false);
   const [billRequested, setBillRequested] = useState(false);
   const [cashMode, setCashMode] = useState<'counter' | 'waiter' | null>(null);
+  const [submittedCashMode, setSubmittedCashMode] = useState<'counter' | 'waiter' | null>(null);
   const [cashSubmitted, setCashSubmitted] = useState(false);
   const [cancelOpen, setCancelOpen] = useState(false);
 
@@ -172,7 +173,7 @@ export default function OrderTracking({ orderIds, outletName, orderType, outletS
   // Derive recorded payment method from any round's payments (latest first)
   const recordedPayment = (() => {
     for (const r of rounds) {
-      const p = (r.payments || [])[0];
+      const p = (r.payments || []).find((payment) => payment.method);
       if (p && p.method) return p;
     }
     return null;
@@ -205,31 +206,43 @@ export default function OrderTracking({ orderIds, outletName, orderType, outletS
     if (!paymentMethod) return;
 
     if (paymentMethod === 'cash') {
-      if (!cashMode) {
+      const effectiveCashMode = orderType === 'delivery' ? 'counter' : cashMode;
+      if (!effectiveCashMode) {
         toast.error('Please choose how you want to pay cash');
         return;
       }
       setSubmitting(true);
       try {
-        // Create a payment record for each order with cash_handling_mode
+        const selectedCashMode = effectiveCashMode;
+        // Create a payment request for each order with cash_handling_mode.
+        // These unpaid cash rows are what make the outlet dashboard show the
+        // "Awaiting Counter Payment / Confirm Cash Received" action.
         for (const id of orderIds) {
           const order = rounds.find(r => r.id === id);
           const orderTotal = order ? (order.subtotal || 0) + (order.tax_amount || 0) + (order.service_charge || 0) + (order.delivery_charge || 0) : 0;
-          await supabase.from('payments').insert({
+          const { error: cashPaymentError } = await supabase.from('payments').insert({
             order_id: id,
             outlet_id: outletId,
             method: 'cash',
             amount: orderTotal || grandTotal / orderIds.length,
             status: 'unpaid',
-            cash_handling_mode: cashMode,
+            cash_handling_mode: selectedCashMode,
           } as any);
+          if (cashPaymentError) throw cashPaymentError;
         }
+        setRounds((prev) => prev.map((round) => ({
+          ...round,
+          payments: [
+            { id: `local-cash-${round.id}`, method: 'cash', status: 'unpaid', cash_handling_mode: selectedCashMode },
+            ...(round.payments || []),
+          ],
+        })));
+        setSubmittedCashMode(selectedCashMode);
         setCashSubmitted(true);
-        const modeLabel = cashMode === 'counter' ? 'counter' : 'waiter';
         toast.success(
           orderType === 'delivery'
             ? 'Cash on delivery selected. Pay when your order arrives.'
-            : cashMode === 'counter'
+            : selectedCashMode === 'counter'
               ? 'Please pay your bill at the counter.'
               : 'A waiter will bring your bill shortly.'
         );
@@ -709,7 +722,7 @@ export default function OrderTracking({ orderIds, outletName, orderType, outletS
               {cashSubmitted && (
                 <div className="bg-primary/10 rounded-2xl p-4 text-center border border-primary/20 space-y-1">
                   <p className="text-sm font-semibold text-primary">
-                    {orderType === 'delivery' ? '🛵 Cash on Delivery' : cashMode === 'waiter' ? '🧑‍🍳 Waiter will bring your bill shortly' : '🏪 Please pay at the counter'}
+                    {orderType === 'delivery' ? '🛵 Cash on Delivery' : submittedCashMode === 'waiter' ? '🧑‍🍳 Waiter will bring your bill shortly' : '🏪 Please pay at the counter'}
                   </p>
                   <p className="text-xs text-muted-foreground">Your payment is pending confirmation by staff.</p>
                 </div>
