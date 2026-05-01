@@ -259,6 +259,65 @@ export default function OrdersDashboard() {
       const target = (orders || []).find((o: any) => o.id === orderId);
       const groupOrders = target ? findMergedOrders(target as any, (orders || []) as any[]) : [target].filter(Boolean);
       const groupOrderIds = groupOrders.map((o: any) => o.id);
+
+      // Inspect the merged group's existing payment rows.
+      const allPayments = groupOrders.flatMap((o: any) => (o.payments || []) as any[]);
+      const pendingCash = allPayments.filter((p: any) => p && p.method === 'cash' && p.status === 'unpaid');
+      const hasOnlinePending = allPayments.some((p: any) => p && p.method && p.method !== 'cash' && p.status === 'pending_verification');
+
+      // If this is a cash flow (pending cash row OR no online proof submitted),
+      // open the cash confirmation dialog so the staff records amount received
+      // and change returned. This is the source of truth for reports.
+      if (!hasOnlinePending) {
+        const ot = (target as any)?.order_type || ((target as any)?.table_id ? 'dine_in' : 'delivery');
+        const taxPct = ot === 'dine_in' ? rawTaxPct : 0;
+        const servicePct = ot === 'dine_in' ? rawServicePct : 0;
+        const groupSubtotal = groupOrders.reduce((s: number, o: any) => s + (o.subtotal || 0), 0);
+        const groupDelivery = ot === 'delivery' ? groupOrders.reduce((s: number, o: any) => s + (o.delivery_charge || 0), 0) : 0;
+        const groupGrand = groupSubtotal + Math.round(groupSubtotal * taxPct / 100) + Math.round(groupSubtotal * servicePct / 100) + groupDelivery;
+
+        const cashHandlingMode = (pendingCash[0] as any)?.cash_handling_mode
+          || (ot === 'delivery' ? 'counter' : null);
+
+        // If no payment row exists yet (e.g. customer never tapped a method),
+        // create one stub cash row per order so the cash dialog has something
+        // to update with received/change.
+        let paymentIds = pendingCash.map((p: any) => p.id);
+        if (paymentIds.length === 0) {
+          const created: string[] = [];
+          for (const o of groupOrders) {
+            const oTotal = (o.subtotal || 0)
+              + (ot === 'dine_in' ? Math.round((o.subtotal || 0) * rawTaxPct / 100) : 0)
+              + (ot === 'dine_in' ? Math.round((o.subtotal || 0) * rawServicePct / 100) : 0)
+              + (ot === 'delivery' ? (o.delivery_charge || 0) : 0);
+            const { data: payRow, error: payErr } = await supabase
+              .from('payments')
+              .insert({
+                order_id: o.id,
+                outlet_id: outlet.id,
+                method: 'cash',
+                amount: oTotal,
+                status: 'unpaid',
+                cash_handling_mode: cashHandlingMode || 'counter',
+              } as any)
+              .select('id')
+              .single();
+            if (payErr) throw payErr;
+            if (payRow?.id) created.push(payRow.id);
+          }
+          paymentIds = created;
+        }
+
+        setCashConfirmGroup({
+          orderIds: groupOrderIds,
+          paymentIds,
+          grandTotal: groupGrand,
+          cashHandlingMode: cashHandlingMode || 'counter',
+        });
+        return;
+      }
+
+      // Online flow with no cash dialog: just toggle paid.
       for (const oid of groupOrderIds) {
         await updateOrder.mutateAsync({ id: oid, payment_status: 'paid' });
       }

@@ -42,6 +42,25 @@ export default function PublicMenu() {
   });
   const [showTracking, setShowTracking] = useState(false);
 
+  // Per-visit session id. Each new browser/visitor on the same QR gets their
+  // own session, so two different customers at the same table do NOT merge
+  // into one combined bill. Cleared together with order ids when the bill
+  // is closed.
+  const sessionKey = `cart-session-${slug || ''}${tableId ? `-${tableId}` : ''}`;
+  const [sessionId] = useState<string>(() => {
+    try {
+      const existing = sessionStorage.getItem(sessionKey);
+      if (existing) return existing;
+      const fresh = (typeof crypto !== 'undefined' && 'randomUUID' in crypto)
+        ? crypto.randomUUID()
+        : `s_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+      sessionStorage.setItem(sessionKey, fresh);
+      return fresh;
+    } catch {
+      return `s_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+    }
+  });
+
   // Track the address (and name/phone) of the FIRST delivery order so we can
   // decide whether a follow-up delivery from the same customer should be
   // charged again. Same address = no extra delivery charge. Changed address =
@@ -163,6 +182,7 @@ export default function PublicMenu() {
       const { data: order, error } = await supabase.from('orders').insert({
         outlet_id: outlet!.id,
         table_id: tableId || null,
+        session_id: sessionId,
         customer_name: customerName || null,
         customer_phone: customerPhone || null,
         customer_address: customerAddress || null,
@@ -258,6 +278,7 @@ export default function PublicMenu() {
           setOrderIds([]);
           sessionStorage.removeItem(storageKey);
           sessionStorage.removeItem(prevDeliveryKey);
+          sessionStorage.removeItem(sessionKey);
           setPrevDelivery(null);
           setShowTracking(false);
         }}
