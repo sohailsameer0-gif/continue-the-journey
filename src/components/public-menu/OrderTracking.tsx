@@ -219,7 +219,7 @@ export default function OrderTracking({ orderIds, outletName, orderType, outletS
         for (const id of orderIds) {
           const order = rounds.find(r => r.id === id);
           const orderTotal = order ? (order.subtotal || 0) + (order.tax_amount || 0) + (order.service_charge || 0) + (order.delivery_charge || 0) : 0;
-          await supabase.from('payments').insert({
+          const { error: cashPaymentError } = await supabase.from('payments').insert({
             order_id: id,
             outlet_id: outletId,
             method: 'cash',
@@ -227,6 +227,7 @@ export default function OrderTracking({ orderIds, outletName, orderType, outletS
             status: 'unpaid',
             cash_handling_mode: selectedCashMode,
           } as any);
+          if (cashPaymentError) throw cashPaymentError;
         }
         setRounds((prev) => prev.map((round) => ({
           ...round,
