@@ -78,7 +78,7 @@ function playNotificationSound() {
 
 export function useOrderNotifications(outletId?: string) {
   const queryClient = useQueryClient();
-  const isFirstLoad = useRef(true);
+  const isFirstLoad = useRef(false);
   // Track pending (unaccepted) order IDs for repeating sound and badge count
   const [pendingOrderIds, setPendingOrderIds] = useState<Set<string>>(new Set());
   const soundIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -155,6 +155,10 @@ export function useOrderNotifications(outletId?: string) {
     toast.info('📋 Bill Requested!', {
       description: 'A customer has requested their bill.',
       duration: 8000,
+      action: {
+        label: 'View Orders',
+        onClick: () => { window.location.pathname = '/outlet/orders'; },
+      },
     });
 
     queryClient.invalidateQueries({ queryKey: ['orders'] });
@@ -206,11 +210,6 @@ export function useOrderNotifications(outletId?: string) {
 
   useEffect(() => {
     if (!outletId) return;
-
-    isFirstLoad.current = true;
-    const timer = setTimeout(() => {
-      isFirstLoad.current = false;
-    }, 3000);
 
     // Subscribe to new orders
     const ordersChannel = supabase
@@ -268,7 +267,6 @@ export function useOrderNotifications(outletId?: string) {
       .subscribe();
 
     return () => {
-      clearTimeout(timer);
       supabase.removeChannel(ordersChannel);
       supabase.removeChannel(billChannel);
       supabase.removeChannel(paymentsChannel);
