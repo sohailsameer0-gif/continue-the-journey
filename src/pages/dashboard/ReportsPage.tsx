@@ -247,6 +247,26 @@ export default function ReportsPage() {
                 <SelectItem value="delivery">Delivery</SelectItem>
               </SelectContent>
             </Select>
+
+            <Select value={filterRider} onValueChange={setFilterRider}>
+              <SelectTrigger className="w-40"><SelectValue placeholder="Rider" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Riders</SelectItem>
+                {(riders || []).map((rider) => (
+                  <SelectItem key={rider.id} value={rider.id}>{rider.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            <Select value={filterWaiter} onValueChange={setFilterWaiter}>
+              <SelectTrigger className="w-40"><SelectValue placeholder="Waiter" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Waiters</SelectItem>
+                {(waiters || []).map((waiter) => (
+                  <SelectItem key={waiter.id} value={waiter.id}>{waiter.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
         </CardContent>
       </Card>
@@ -403,6 +423,7 @@ export default function ReportsPage() {
                         <TableHead>Date & Time</TableHead>
                         <TableHead>Order</TableHead>
                         <TableHead>Type</TableHead>
+                        <TableHead>Staff</TableHead>
                         <TableHead>Method</TableHead>
                         <TableHead>Mode</TableHead>
                         <TableHead className="text-right">Amount</TableHead>
@@ -418,11 +439,18 @@ export default function ReportsPage() {
                         const typeLabels: Record<string, string> = { dine_in: 'Dine-in', takeaway: 'Takeaway', delivery: 'Delivery' };
                         const cashMode = (p as any).cash_handling_mode;
                         const modeLabel = cashMode === 'waiter' ? 'Waiter' : cashMode === 'counter' ? 'Counter' : '—';
+                        const order = (p.orders as any) || {};
+                        const staffLabel = orderType === 'delivery'
+                          ? (order.rider?.name ? `Rider: ${order.rider.name}` : '—')
+                          : orderType === 'dine_in'
+                            ? (order.waiter?.name ? `Waiter: ${order.waiter.name}` : '—')
+                            : '—';
                         return (
                           <TableRow key={p.id}>
                             <TableCell className="text-sm">{format(parseISO(p.created_at!), 'dd MMM yyyy, hh:mm a')}</TableCell>
                             <TableCell className="text-sm font-mono">#{p.order_id.slice(0, 8)}</TableCell>
                             <TableCell><Badge variant="outline" className="text-xs">{typeLabels[orderType] || orderType}</Badge></TableCell>
+                            <TableCell className="text-sm">{staffLabel}</TableCell>
                             <TableCell className="text-sm">{methodLabels[p.method || ''] || p.method || '—'}</TableCell>
                             <TableCell className="text-sm">{modeLabel}</TableCell>
                             <TableCell className="text-right font-semibold">Rs. {Number(p.amount).toLocaleString()}</TableCell>
