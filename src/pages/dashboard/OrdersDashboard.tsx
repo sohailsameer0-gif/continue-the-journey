@@ -527,6 +527,12 @@ export default function OrdersDashboard() {
                   {(order as any).pickup_time && (
                     <span className="flex items-center gap-1"><Clock className="h-3.5 w-3.5" /> Pickup: {(order as any).pickup_time}</span>
                   )}
+                  {ot === 'delivery' && (order as any).rider?.name && (
+                    <span className="flex items-center gap-1"><Bike className="h-3.5 w-3.5" /> Rider: {(order as any).rider.name}</span>
+                  )}
+                  {ot === 'dine_in' && (order as any).waiter?.name && (
+                    <span className="flex items-center gap-1"><UserCheck className="h-3.5 w-3.5" /> Waiter: {(order as any).waiter.name}</span>
+                  )}
                 </div>
 
                 {/* Items */}
