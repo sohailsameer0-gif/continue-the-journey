@@ -247,10 +247,23 @@ export default function OrderTracking({ orderIds, outletName, orderType, outletS
       return;
     }
 
-    if (!transactionId.trim()) {
-      toast.error('Please enter your transaction ID');
-      return;
+    // TRXID rules:
+    //  - EasyPaisa: exactly 11 digits
+    //  - JazzCash: exactly 12 digits
+    //  - Bank Transfer: not required (photo proof only)
+    const trx = transactionId.trim();
+    if (onlineMethod === 'easypaisa') {
+      if (!/^\d{11}$/.test(trx)) {
+        toast.error('EasyPaisa Transaction ID must be exactly 11 digits.');
+        return;
+      }
+    } else if (onlineMethod === 'jazzcash') {
+      if (!/^\d{12}$/.test(trx)) {
+        toast.error('JazzCash Transaction ID must be exactly 12 digits.');
+        return;
+      }
     }
+    // bank_transfer: TRXID not required
 
     if (!proofFile) {
       toast.error('Please upload your payment proof');
@@ -283,7 +296,7 @@ export default function OrderTracking({ orderIds, outletName, orderType, outletS
             orderIds,
             outletId,
             method: onlineMethod,
-            transactionId: transactionId.trim(),
+            transactionId: onlineMethod === 'bank_transfer' ? '' : transactionId.trim(),
             proofBase64,
             fileName: proofFile.name,
             contentType: proofFile.type || 'image/jpeg',
