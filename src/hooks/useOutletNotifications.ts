@@ -79,7 +79,7 @@ export function useOutletNotifications(outletId?: string) {
         (supabase as any).from('outlet_messages').select('id, kind, title, body, created_at, read_at').eq('outlet_id', outletId!).gte('created_at', since14d).order('created_at', { ascending: false }).limit(30),
         supabase.from('payments').select('id, amount, method, created_at, order_id').eq('outlet_id', outletId!).eq('status', 'pending_verification').gte('created_at', since7d).order('created_at', { ascending: false }).limit(30),
         supabase.from('payments').select('id, amount, method, cash_handling_mode, created_at, order_id, orders(order_type)').eq('outlet_id', outletId!).eq('method', 'cash').eq('status', 'unpaid').gte('created_at', since7d).order('created_at', { ascending: false }).limit(30),
-        supabase.from('bill_requests').select('id, order_id, status, created_at, orders!inner(outlet_id, customer_name, table_id, tables(table_number))').eq('orders.outlet_id', outletId!).eq('status', 'pending').gte('created_at', since7d).order('created_at', { ascending: false }).limit(30),
+        supabase.from('bill_requests').select('id, order_id, status, created_at, orders!inner(outlet_id, customer_name, table_id, tables(table_number))').eq('orders.outlet_id', outletId!).eq('status', 'requested').gte('created_at', since7d).order('created_at', { ascending: false }).limit(30),
       ]);
 
       const list: OutletNotification[] = [];
