@@ -206,13 +206,14 @@ export default function OrderTracking({ orderIds, outletName, orderType, outletS
     if (!paymentMethod) return;
 
     if (paymentMethod === 'cash') {
-      if (!cashMode) {
+      const effectiveCashMode = orderType === 'delivery' ? 'counter' : cashMode;
+      if (!effectiveCashMode) {
         toast.error('Please choose how you want to pay cash');
         return;
       }
       setSubmitting(true);
       try {
-        const selectedCashMode = cashMode;
+        const selectedCashMode = effectiveCashMode;
         // Create a payment request for each order with cash_handling_mode.
         // These unpaid cash rows are what make the outlet dashboard show the
         // "Awaiting Counter Payment / Confirm Cash Received" action.
