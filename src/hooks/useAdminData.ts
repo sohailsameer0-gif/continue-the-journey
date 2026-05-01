@@ -175,6 +175,7 @@ export function useUpdateSubscriptionAdmin() {
       plan?: 'free_demo' | 'basic' | 'standard' | 'pro';
       status?: 'active' | 'expired' | 'paid_active' | 'suspended';
       demo_end_date?: string | null;
+      paid_until?: string | null;
     }) => {
       const { id, ...updates } = params;
       const { data: existing } = await supabase
