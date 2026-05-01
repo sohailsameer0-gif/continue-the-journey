@@ -173,7 +173,7 @@ export default function OrderTracking({ orderIds, outletName, orderType, outletS
   // Derive recorded payment method from any round's payments (latest first)
   const recordedPayment = (() => {
     for (const r of rounds) {
-      const p = (r.payments || [])[0];
+      const p = (r.payments || []).find((payment) => payment.method);
       if (p && p.method) return p;
     }
     return null;
@@ -720,7 +720,7 @@ export default function OrderTracking({ orderIds, outletName, orderType, outletS
               {cashSubmitted && (
                 <div className="bg-primary/10 rounded-2xl p-4 text-center border border-primary/20 space-y-1">
                   <p className="text-sm font-semibold text-primary">
-                    {orderType === 'delivery' ? '🛵 Cash on Delivery' : cashMode === 'waiter' ? '🧑‍🍳 Waiter will bring your bill shortly' : '🏪 Please pay at the counter'}
+                    {orderType === 'delivery' ? '🛵 Cash on Delivery' : submittedCashMode === 'waiter' ? '🧑‍🍳 Waiter will bring your bill shortly' : '🏪 Please pay at the counter'}
                   </p>
                   <p className="text-xs text-muted-foreground">Your payment is pending confirmation by staff.</p>
                 </div>
