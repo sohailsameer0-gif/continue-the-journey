@@ -278,6 +278,7 @@ export default function PublicMenu() {
           setOrderIds([]);
           sessionStorage.removeItem(storageKey);
           sessionStorage.removeItem(prevDeliveryKey);
+          sessionStorage.removeItem(sessionKey);
           setPrevDelivery(null);
           setShowTracking(false);
         }}
