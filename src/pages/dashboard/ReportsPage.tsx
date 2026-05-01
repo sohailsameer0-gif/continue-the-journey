@@ -13,6 +13,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { format, startOfDay, endOfDay, isWithinInterval, parseISO, isSameDay } from 'date-fns';
 import { CalendarIcon, DollarSign, ShoppingCart, CreditCard, TrendingUp, UtensilsCrossed, Truck, ShoppingBag, Download, Filter, XCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useStaff } from '@/hooks/useStaff';
 
 function useOutletPayments(outletId?: string) {
   return useQuery({
@@ -20,7 +21,7 @@ function useOutletPayments(outletId?: string) {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('payments')
-        .select('*, orders(id, order_type, customer_name, table_id, created_at, total, status)')
+        .select('*, orders(id, order_type, customer_name, table_id, created_at, total, status, rider_id, waiter_id, rider:rider_id(id, name, phone), waiter:waiter_id(id, name, phone))')
         .eq('outlet_id', outletId!)
         .order('created_at', { ascending: false });
       if (error) throw error;
@@ -37,10 +38,14 @@ export default function ReportsPage() {
   const { data: outlet } = useOutlet();
   const { data: orders } = useOrders(outlet?.id);
   const { data: payments } = useOutletPayments(outlet?.id);
+  const { data: riders } = useStaff(outlet?.id, 'rider');
+  const { data: waiters } = useStaff(outlet?.id, 'waiter');
 
   const [dateRange, setDateRange] = useState<DateRange>({ from: new Date(), to: new Date() });
   const [filterMethod, setFilterMethod] = useState<string>('all');
   const [filterOrderType, setFilterOrderType] = useState<string>('all');
+  const [filterRider, setFilterRider] = useState<string>('all');
+  const [filterWaiter, setFilterWaiter] = useState<string>('all');
   const [calendarOpen, setCalendarOpen] = useState(false);
 
   const rangeFrom = useMemo(() => startOfDay(dateRange.from), [dateRange.from]);
@@ -54,9 +59,11 @@ export default function ReportsPage() {
       if (filterMethod !== 'all' && p.method !== filterMethod) return false;
       const orderType = (p.orders as any)?.order_type || 'dine_in';
       if (filterOrderType !== 'all' && orderType !== filterOrderType) return false;
+      if (filterRider !== 'all' && (p.orders as any)?.rider_id !== filterRider) return false;
+      if (filterWaiter !== 'all' && (p.orders as any)?.waiter_id !== filterWaiter) return false;
       return true;
     });
-  }, [payments, rangeFrom, rangeTo, filterMethod, filterOrderType]);
+  }, [payments, rangeFrom, rangeTo, filterMethod, filterOrderType, filterRider, filterWaiter]);
 
   const filteredOrders = useMemo(() => {
     if (!orders) return [];
@@ -64,11 +71,13 @@ export default function ReportsPage() {
       const date = parseISO(o.created_at!);
       if (!isWithinInterval(date, { start: rangeFrom, end: rangeTo })) return false;
       if (filterOrderType !== 'all' && (o as any).order_type !== filterOrderType) return false;
+      if (filterRider !== 'all' && (o as any).rider_id !== filterRider) return false;
+      if (filterWaiter !== 'all' && (o as any).waiter_id !== filterWaiter) return false;
       // Exclude cancelled orders from main reports — shown separately
       if ((o as any).status === 'cancelled') return false;
       return true;
     });
-  }, [orders, rangeFrom, rangeTo, filterOrderType]);
+  }, [orders, rangeFrom, rangeTo, filterOrderType, filterRider, filterWaiter]);
 
   const cancelledOrders = useMemo(() => {
     if (!orders) return [];
@@ -78,9 +87,11 @@ export default function ReportsPage() {
       const date = parseISO(dateStr!);
       if (!isWithinInterval(date, { start: rangeFrom, end: rangeTo })) return false;
       if (filterOrderType !== 'all' && (o as any).order_type !== filterOrderType) return false;
+      if (filterRider !== 'all' && (o as any).rider_id !== filterRider) return false;
+      if (filterWaiter !== 'all' && (o as any).waiter_id !== filterWaiter) return false;
       return true;
     });
-  }, [orders, rangeFrom, rangeTo, filterOrderType]);
+  }, [orders, rangeFrom, rangeTo, filterOrderType, filterRider, filterWaiter]);
 
   if (!outlet) return <p className="text-muted-foreground">Please set up your outlet first.</p>;
 
