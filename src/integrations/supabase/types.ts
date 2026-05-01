@@ -103,18 +103,21 @@ export type Database = {
           created_at: string
           id: string
           order_id: string
+          outlet_id: string | null
           status: string
         }
         Insert: {
           created_at?: string
           id?: string
           order_id: string
+          outlet_id?: string | null
           status?: string
         }
         Update: {
           created_at?: string
           id?: string
           order_id?: string
+          outlet_id?: string | null
           status?: string
         }
         Relationships: [
@@ -123,6 +126,13 @@ export type Database = {
             columns: ["order_id"]
             isOneToOne: false
             referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bill_requests_outlet_id_fkey"
+            columns: ["outlet_id"]
+            isOneToOne: false
+            referencedRelation: "outlets"
             referencedColumns: ["id"]
           },
         ]
