@@ -109,6 +109,7 @@ export default function OrderTracking({ orderIds, outletName, orderType, outletS
   const [submitting, setSubmitting] = useState(false);
   const [billRequested, setBillRequested] = useState(false);
   const [cashMode, setCashMode] = useState<'counter' | 'waiter' | null>(null);
+  const [submittedCashMode, setSubmittedCashMode] = useState<'counter' | 'waiter' | null>(null);
   const [cashSubmitted, setCashSubmitted] = useState(false);
   const [cancelOpen, setCancelOpen] = useState(false);
 
@@ -211,7 +212,10 @@ export default function OrderTracking({ orderIds, outletName, orderType, outletS
       }
       setSubmitting(true);
       try {
-        // Create a payment record for each order with cash_handling_mode
+        const selectedCashMode = cashMode;
+        // Create a payment request for each order with cash_handling_mode.
+        // These unpaid cash rows are what make the outlet dashboard show the
+        // "Awaiting Counter Payment / Confirm Cash Received" action.
         for (const id of orderIds) {
           const order = rounds.find(r => r.id === id);
           const orderTotal = order ? (order.subtotal || 0) + (order.tax_amount || 0) + (order.service_charge || 0) + (order.delivery_charge || 0) : 0;
@@ -221,15 +225,22 @@ export default function OrderTracking({ orderIds, outletName, orderType, outletS
             method: 'cash',
             amount: orderTotal || grandTotal / orderIds.length,
             status: 'unpaid',
-            cash_handling_mode: cashMode,
+            cash_handling_mode: selectedCashMode,
           } as any);
         }
+        setRounds((prev) => prev.map((round) => ({
+          ...round,
+          payments: [
+            { id: `local-cash-${round.id}`, method: 'cash', status: 'unpaid', cash_handling_mode: selectedCashMode },
+            ...(round.payments || []),
+          ],
+        })));
+        setSubmittedCashMode(selectedCashMode);
         setCashSubmitted(true);
-        const modeLabel = cashMode === 'counter' ? 'counter' : 'waiter';
         toast.success(
           orderType === 'delivery'
             ? 'Cash on delivery selected. Pay when your order arrives.'
-            : cashMode === 'counter'
+            : selectedCashMode === 'counter'
               ? 'Please pay your bill at the counter.'
               : 'A waiter will bring your bill shortly.'
         );
