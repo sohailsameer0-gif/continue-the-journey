@@ -861,6 +861,7 @@ export type Database = {
       }
       platform_settings: {
         Row: {
+          auto_approve_subscriptions: boolean
           basic_enable_delivery: boolean
           basic_enable_reports: boolean
           basic_max_menu_items: number
@@ -888,6 +889,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          auto_approve_subscriptions?: boolean
           basic_enable_delivery?: boolean
           basic_enable_reports?: boolean
           basic_max_menu_items?: number
@@ -915,6 +917,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          auto_approve_subscriptions?: boolean
           basic_enable_delivery?: boolean
           basic_enable_reports?: boolean
           basic_max_menu_items?: number
