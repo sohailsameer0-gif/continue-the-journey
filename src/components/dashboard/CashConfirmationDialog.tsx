@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -17,7 +17,16 @@ interface CashConfirmationDialogProps {
 export default function CashConfirmationDialog({
   open, onClose, grandTotal, cashHandlingMode, onConfirm, submitting
 }: CashConfirmationDialogProps) {
-  const [amountReceived, setAmountReceived] = useState<string>(grandTotal.toString());
+  const [amountReceived, setAmountReceived] = useState<string>(grandTotal > 0 ? grandTotal.toString() : '');
+
+  // Re-seed the input whenever the dialog re-opens or the grand total changes,
+  // so the staff sees the bill amount pre-filled instead of "0".
+  useEffect(() => {
+    if (open) {
+      setAmountReceived(grandTotal > 0 ? grandTotal.toString() : '');
+    }
+  }, [open, grandTotal]);
+
   const changeReturned = Math.max(0, Number(amountReceived || 0) - grandTotal);
 
   const modeLabel = cashHandlingMode === 'waiter' ? 'Paid via Waiter' : 'Paid at Counter';
