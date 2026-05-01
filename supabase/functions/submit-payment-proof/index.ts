@@ -52,7 +52,15 @@ Deno.serve(async (req) => {
     if (!Array.isArray(orderIds) || orderIds.length === 0) return json(400, { ok: false, error: "orderIds required" });
     if (!outletId) return json(400, { ok: false, error: "outletId required" });
     if (!["bank_transfer", "jazzcash", "easypaisa"].includes(method)) return json(400, { ok: false, error: "Invalid method" });
-    if (!transactionId || transactionId.length > 200) return json(400, { ok: false, error: "Invalid transactionId" });
+    // TRXID is required for EasyPaisa (11 digits) and JazzCash (12 digits).
+    // For bank_transfer the photo is the proof — TRXID is optional.
+    if (method === "easypaisa") {
+      if (!/^\d{11}$/.test(transactionId || "")) return json(400, { ok: false, error: "EasyPaisa Transaction ID must be exactly 11 digits" });
+    } else if (method === "jazzcash") {
+      if (!/^\d{12}$/.test(transactionId || "")) return json(400, { ok: false, error: "JazzCash Transaction ID must be exactly 12 digits" });
+    } else if (transactionId && transactionId.length > 200) {
+      return json(400, { ok: false, error: "Invalid transactionId" });
+    }
     if (!proofBase64 || proofBase64.length > 8_000_000) return json(400, { ok: false, error: "Proof too large or missing" });
 
     const admin = createClient(SUPABASE_URL, SERVICE_ROLE, {

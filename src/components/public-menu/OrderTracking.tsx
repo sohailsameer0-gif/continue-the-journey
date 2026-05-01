@@ -247,10 +247,23 @@ export default function OrderTracking({ orderIds, outletName, orderType, outletS
       return;
     }
 
-    if (!transactionId.trim()) {
-      toast.error('Please enter your transaction ID');
-      return;
+    // TRXID rules:
+    //  - EasyPaisa: exactly 11 digits
+    //  - JazzCash: exactly 12 digits
+    //  - Bank Transfer: not required (photo proof only)
+    const trx = transactionId.trim();
+    if (onlineMethod === 'easypaisa') {
+      if (!/^\d{11}$/.test(trx)) {
+        toast.error('EasyPaisa Transaction ID must be exactly 11 digits.');
+        return;
+      }
+    } else if (onlineMethod === 'jazzcash') {
+      if (!/^\d{12}$/.test(trx)) {
+        toast.error('JazzCash Transaction ID must be exactly 12 digits.');
+        return;
+      }
     }
+    // bank_transfer: TRXID not required
 
     if (!proofFile) {
       toast.error('Please upload your payment proof');
@@ -283,7 +296,7 @@ export default function OrderTracking({ orderIds, outletName, orderType, outletS
             orderIds,
             outletId,
             method: onlineMethod,
-            transactionId: transactionId.trim(),
+            transactionId: onlineMethod === 'bank_transfer' ? '' : transactionId.trim(),
             proofBase64,
             fileName: proofFile.name,
             contentType: proofFile.type || 'image/jpeg',
@@ -627,7 +640,25 @@ export default function OrderTracking({ orderIds, outletName, orderType, outletS
                         {/* Step 4: Proof submission form */}
                         <div className="border-t pt-3 space-y-2.5">
                           <p className="text-xs font-semibold text-foreground">📤 Submit Payment Proof</p>
-                          <Input placeholder="Transaction ID / Reference Number *" value={transactionId} onChange={e => setTransactionId(e.target.value)} className="rounded-xl h-11" />
+                          {onlineMethod !== 'bank_transfer' && (
+                            <Input
+                              placeholder={
+                                onlineMethod === 'easypaisa'
+                                  ? 'EasyPaisa Transaction ID (11 digits) *'
+                                  : 'JazzCash Transaction ID (12 digits) *'
+                              }
+                              value={transactionId}
+                              onChange={e => setTransactionId(e.target.value.replace(/\D/g, ''))}
+                              inputMode="numeric"
+                              maxLength={onlineMethod === 'easypaisa' ? 11 : 12}
+                              className="rounded-xl h-11"
+                            />
+                          )}
+                          {onlineMethod === 'bank_transfer' && (
+                            <p className="text-[11px] text-muted-foreground">
+                              Just upload a clear screenshot/photo of your bank transfer receipt — no Transaction ID needed.
+                            </p>
+                          )}
                           <label className="flex items-center gap-3 px-4 py-3 rounded-xl border-2 border-dashed border-border cursor-pointer hover:border-primary/50 transition-colors">
                             <Upload className="h-5 w-5 text-muted-foreground shrink-0" />
                             <span className="text-sm text-muted-foreground truncate">{proofFile ? proofFile.name : 'Upload Payment Screenshot'}</span>
@@ -684,7 +715,16 @@ export default function OrderTracking({ orderIds, outletName, orderType, outletS
                 </div>
               )}
               {paymentMethod === 'online' && onlineMethod && (
-                <Button onClick={handleSubmitPayment} disabled={submitting || !transactionId.trim() || !proofFile} className="w-full rounded-2xl py-5 font-bold gap-2">
+                <Button
+                  onClick={handleSubmitPayment}
+                  disabled={
+                    submitting ||
+                    !proofFile ||
+                    (onlineMethod === 'easypaisa' && !/^\d{11}$/.test(transactionId.trim())) ||
+                    (onlineMethod === 'jazzcash' && !/^\d{12}$/.test(transactionId.trim()))
+                  }
+                  className="w-full rounded-2xl py-5 font-bold gap-2"
+                >
                   {submitting ? 'Submitting...' : 'Submit Payment Proof'}
                   {!submitting && <ArrowRight className="h-4 w-4" />}
                 </Button>
