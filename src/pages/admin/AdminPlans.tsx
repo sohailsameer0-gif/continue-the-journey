@@ -201,7 +201,7 @@ export default function AdminPlans() {
       </Card>
 
       <Dialog open={!!editing} onOpenChange={v => !v && setEditing(null)}>
-        <DialogContent>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader><DialogTitle>Update Subscription</DialogTitle></DialogHeader>
           <div className="space-y-4 py-2">
             <div className="space-y-2">
@@ -233,6 +233,8 @@ export default function AdminPlans() {
               <Input type="number" value={extendDays} onChange={e => setExtendDays(e.target.value)} />
               <p className="text-xs text-muted-foreground">Adds to existing renewal date if active, otherwise from today.</p>
             </div>
+
+            {editing && <SubscriptionHistoryTimeline outletId={editing.outlet_id} />}
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setEditing(null)}>Cancel</Button>
@@ -240,6 +242,72 @@ export default function AdminPlans() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+    </div>
+  );
+}
+
+function SubscriptionHistoryTimeline({ outletId }: { outletId: string }) {
+  const { data: history, isLoading } = useSubscriptionHistory(outletId);
+
+  const eventMeta = (e: string): { icon: any; color: string; label: string } => {
+    switch (e) {
+      case 'created': return { icon: Plus, color: 'text-blue-600 bg-blue-100 dark:bg-blue-900/30', label: 'Created' };
+      case 'plan_change': return { icon: ArrowRight, color: 'text-purple-600 bg-purple-100 dark:bg-purple-900/30', label: 'Plan changed' };
+      case 'extended': return { icon: Calendar, color: 'text-green-600 bg-green-100 dark:bg-green-900/30', label: 'Extended' };
+      case 'suspended': return { icon: Pause, color: 'text-destructive bg-destructive/10', label: 'Suspended' };
+      case 'reactivated': return { icon: Play, color: 'text-green-600 bg-green-100 dark:bg-green-900/30', label: 'Reactivated' };
+      case 'expired': return { icon: RefreshCw, color: 'text-amber-600 bg-amber-100 dark:bg-amber-900/30', label: 'Expired' };
+      default: return { icon: RefreshCw, color: 'text-muted-foreground bg-muted', label: 'Status change' };
+    }
+  };
+
+  const renderDetail = (h: any) => {
+    if (h.event_type === 'plan_change') return <>{(h.from_plan ?? '—').replace('_', ' ')} → <span className="font-medium">{(h.to_plan ?? '—').replace('_', ' ')}</span></>;
+    if (h.event_type === 'extended') {
+      const from = h.from_paid_until || h.from_demo_end_date;
+      const to = h.to_paid_until || h.to_demo_end_date;
+      return <>{from ? format(new Date(from), 'dd MMM yyyy') : '—'} → <span className="font-medium">{to ? format(new Date(to), 'dd MMM yyyy') : '—'}</span></>;
+    }
+    if (h.from_status || h.to_status) return <>{(h.from_status ?? '—').replace('_', ' ')} → <span className="font-medium">{(h.to_status ?? '—').replace('_', ' ')}</span></>;
+    if (h.event_type === 'created') return <>{(h.to_plan ?? '').replace('_', ' ')} · {(h.to_status ?? '').replace('_', ' ')}</>;
+    return null;
+  };
+
+  return (
+    <div className="space-y-2 pt-2 border-t">
+      <div className="flex items-center gap-2">
+        <History className="h-4 w-4 text-muted-foreground" />
+        <Label className="m-0">History timeline</Label>
+      </div>
+      {isLoading ? (
+        <div className="flex justify-center py-4"><Loader2 className="h-4 w-4 animate-spin text-muted-foreground" /></div>
+      ) : !history || history.length === 0 ? (
+        <p className="text-xs text-muted-foreground py-3">No history recorded yet. Future plan changes will appear here.</p>
+      ) : (
+        <ScrollArea className="h-64 rounded-md border p-3">
+          <ol className="relative border-l border-border ml-2 space-y-4">
+            {history.map((h: any) => {
+              const meta = eventMeta(h.event_type);
+              const Icon = meta.icon;
+              return (
+                <li key={h.id} className="ml-4">
+                  <span className={`absolute -left-3 flex h-6 w-6 items-center justify-center rounded-full ring-4 ring-background ${meta.color}`}>
+                    <Icon className="h-3 w-3" />
+                  </span>
+                  <div className="flex items-baseline justify-between gap-2 flex-wrap">
+                    <p className="text-sm font-medium capitalize">{meta.label}</p>
+                    <time className="text-xs text-muted-foreground" title={format(new Date(h.created_at), 'PPpp')}>
+                      {formatDistanceToNow(new Date(h.created_at), { addSuffix: true })}
+                    </time>
+                  </div>
+                  <p className="text-xs text-muted-foreground capitalize">{renderDetail(h)}</p>
+                  {h.actor_email && <p className="text-[10px] text-muted-foreground mt-0.5">by {h.actor_email}</p>}
+                </li>
+              );
+            })}
+          </ol>
+        </ScrollArea>
+      )}
     </div>
   );
 }
