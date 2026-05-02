@@ -946,6 +946,66 @@ export type Database = {
         }
         Relationships: []
       }
+      subscription_history: {
+        Row: {
+          actor_email: string | null
+          actor_id: string | null
+          created_at: string
+          event_type: string
+          from_demo_end_date: string | null
+          from_paid_until: string | null
+          from_plan: string | null
+          from_status: string | null
+          id: string
+          metadata: Json
+          note: string | null
+          outlet_id: string
+          subscription_id: string | null
+          to_demo_end_date: string | null
+          to_paid_until: string | null
+          to_plan: string | null
+          to_status: string | null
+        }
+        Insert: {
+          actor_email?: string | null
+          actor_id?: string | null
+          created_at?: string
+          event_type: string
+          from_demo_end_date?: string | null
+          from_paid_until?: string | null
+          from_plan?: string | null
+          from_status?: string | null
+          id?: string
+          metadata?: Json
+          note?: string | null
+          outlet_id: string
+          subscription_id?: string | null
+          to_demo_end_date?: string | null
+          to_paid_until?: string | null
+          to_plan?: string | null
+          to_status?: string | null
+        }
+        Update: {
+          actor_email?: string | null
+          actor_id?: string | null
+          created_at?: string
+          event_type?: string
+          from_demo_end_date?: string | null
+          from_paid_until?: string | null
+          from_plan?: string | null
+          from_status?: string | null
+          id?: string
+          metadata?: Json
+          note?: string | null
+          outlet_id?: string
+          subscription_id?: string | null
+          to_demo_end_date?: string | null
+          to_paid_until?: string | null
+          to_plan?: string | null
+          to_status?: string | null
+        }
+        Relationships: []
+      }
       subscriptions: {
         Row: {
           created_at: string
