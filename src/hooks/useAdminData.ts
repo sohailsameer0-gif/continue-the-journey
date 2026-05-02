@@ -167,6 +167,23 @@ export function useUpdatePaymentAdmin() {
 }
 
 // ===== Subscriptions =====
+export function useSubscriptionHistory(outletId?: string) {
+  return useQuery({
+    queryKey: ['admin', 'sub_history', outletId],
+    queryFn: async () => {
+      const { data, error } = await (supabase as any)
+        .from('subscription_history')
+        .select('*')
+        .eq('outlet_id', outletId!)
+        .order('created_at', { ascending: false })
+        .limit(100);
+      if (error) throw error;
+      return data ?? [];
+    },
+    enabled: !!outletId,
+  });
+}
+
 export function useUpdateSubscriptionAdmin() {
   const qc = useQueryClient();
   return useMutation({

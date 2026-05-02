@@ -7,6 +7,9 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import { CheckCircle2, XCircle, Ban, Play, Search, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
@@ -20,6 +23,8 @@ export default function AdminOutlets() {
   const qc = useQueryClient();
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [suspendTarget, setSuspendTarget] = useState<any | null>(null);
+  const [suspendReason, setSuspendReason] = useState('');
   const refreshNotifications = () => qc.invalidateQueries({ queryKey: ['admin', 'notifications'] });
 
   const filtered = (outlets ?? []).filter((o: any) => {
@@ -40,18 +45,25 @@ export default function AdminOutlets() {
     toast.success(`${o.name} rejected`);
   };
   const handleSuspend = async (o: any) => {
-    const reason = window.prompt(
-      `Suspend ${o.name}?\n\nThis will block the outlet from accessing the platform. Optionally enter a reason that will be shown to the owner:`,
-      ''
-    );
-    if (reason === null) return; // user cancelled
+    setSuspendTarget(o);
+    setSuspendReason('');
+  };
+
+  const confirmSuspend = async () => {
+    if (!suspendTarget) return;
+    const reason = suspendReason.trim();
+    if (reason.length < 5) {
+      toast.error('Please enter a reason (min 5 characters). The outlet owner will see this.');
+      return;
+    }
     await updateOutlet.mutateAsync({
-      id: o.id,
+      id: suspendTarget.id,
       suspended: true,
-      suspended_reason: reason.trim() || null,
+      suspended_reason: reason,
     });
-    // subscription status is auto-mirrored by DB trigger; no manual update needed
-    toast.success(`${o.name} suspended`);
+    toast.success(`${suspendTarget.name} suspended — owner notified`);
+    setSuspendTarget(null);
+    setSuspendReason('');
   };
   const handleReactivate = async (o: any) => {
     await updateOutlet.mutateAsync({
@@ -162,6 +174,37 @@ export default function AdminOutlets() {
           )}
         </CardContent>
       </Card>
+
+      <Dialog open={!!suspendTarget} onOpenChange={v => { if (!v) { setSuspendTarget(null); setSuspendReason(''); } }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Suspend {suspendTarget?.name}?</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 py-2">
+            <p className="text-sm text-muted-foreground">
+              The outlet owner will receive a notification with this reason. Please be specific (min 5 characters).
+            </p>
+            <div className="space-y-2">
+              <Label>Reason for suspension <span className="text-destructive">*</span></Label>
+              <Textarea
+                value={suspendReason}
+                onChange={e => setSuspendReason(e.target.value)}
+                placeholder="e.g. Payment overdue for 30+ days, please contact billing."
+                rows={4}
+                maxLength={500}
+                autoFocus
+              />
+              <p className="text-xs text-muted-foreground">{suspendReason.length}/500</p>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => { setSuspendTarget(null); setSuspendReason(''); }}>Cancel</Button>
+            <Button variant="destructive" onClick={confirmSuspend} disabled={suspendReason.trim().length < 5}>
+              <Ban className="h-4 w-4 mr-1" />Suspend & Notify
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
