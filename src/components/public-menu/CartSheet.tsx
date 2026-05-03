@@ -3,6 +3,11 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 
+const isValidPkPhone = (raw: string) => {
+  const digits = (raw || '').replace(/\D/g, '');
+  return digits.length === 11 && digits.startsWith('03');
+};
+
 export interface CartItem {
   id: string;
   name: string;
@@ -58,8 +63,15 @@ export default function CartSheet({
   const isDelivery = orderType === 'delivery';
   const isTakeaway = orderType === 'takeaway';
   const needsCustomerInfo = isDelivery || isTakeaway;
+  const phoneDigits = (customerPhone || '').replace(/\D/g, '');
+  const phoneValid = !needsCustomerInfo
+    ? (phoneDigits.length === 0 || isValidPkPhone(customerPhone))
+    : isValidPkPhone(customerPhone);
+  const phoneError = (customerPhone && !isValidPkPhone(customerPhone))
+    ? 'Phone must be 11 digits and start with 03 (e.g. 03001234567)'
+    : '';
   const canPlace = cart.length > 0 && !placing &&
-    (!needsCustomerInfo || (customerName && customerPhone)) &&
+    (!needsCustomerInfo || (customerName && phoneValid)) &&
     (!isDelivery || customerAddress);
 
   const orderLabel = orderType === 'dine_in' ? 'Dine-in' : orderType === 'takeaway' ? 'Takeaway' : 'Delivery';
@@ -117,7 +129,16 @@ export default function CartSheet({
             </h3>
             <div className="space-y-2.5">
               <Input placeholder={needsCustomerInfo ? 'Full Name *  e.g. Ahmed Ali' : 'Your Name (optional)'} value={customerName} onChange={e => onSetName(e.target.value)} className="rounded-xl h-11 bg-muted/50 border-border/50 focus:bg-background" />
-              <Input placeholder={needsCustomerInfo ? 'Phone Number *  03xx-xxxxxxx' : 'Phone (optional)'} value={customerPhone} onChange={e => onSetPhone(e.target.value)} className="rounded-xl h-11 bg-muted/50 border-border/50 focus:bg-background" type="tel" />
+              <Input
+                placeholder={needsCustomerInfo ? 'Phone Number *  03001234567' : 'Phone (optional)  03001234567'}
+                value={customerPhone}
+                onChange={e => onSetPhone(e.target.value.replace(/\D/g, '').slice(0, 11))}
+                className={`rounded-xl h-11 bg-muted/50 border-border/50 focus:bg-background ${phoneError ? 'border-destructive' : ''}`}
+                type="tel"
+                inputMode="numeric"
+                maxLength={11}
+              />
+              {phoneError && <p className="text-[11px] text-destructive px-1">{phoneError}</p>}
               {isDelivery && (
                 <>
                   <Textarea placeholder="Delivery Address *" value={customerAddress} onChange={e => onSetAddress(e.target.value)} className="rounded-xl min-h-[60px] bg-muted/50 border-border/50 focus:bg-background" />
