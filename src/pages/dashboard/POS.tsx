@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Plus, Minus, Trash2, Search, ShoppingCart, Printer, Loader2, Banknote, CreditCard, Smartphone } from 'lucide-react';
 import { toast } from 'sonner';
+import CashConfirmationDialog from '@/components/dashboard/CashConfirmationDialog';
 
 type CartItem = { id: string; name: string; price: number; quantity: number };
 
@@ -29,6 +30,8 @@ export default function POS() {
   const [paymentMethod, setPaymentMethod] = useState<'cash' | 'card' | 'online'>('cash');
   const [paperSize, setPaperSize] = useState<'58mm' | '80mm'>('80mm');
   const [placing, setPlacing] = useState(false);
+  const [cashDialogOpen, setCashDialogOpen] = useState(false);
+  const [printAfterPay, setPrintAfterPay] = useState(false);
 
   const visibleItems = useMemo(() => {
     return (items ?? []).filter((i: any) => {
@@ -59,7 +62,7 @@ export default function POS() {
 
   const fmt = (n: number) => `${currency} ${n.toFixed(2)}`;
 
-  const printReceipt = (orderNumber: string) => {
+  const printReceipt = (orderNumber: string, amountReceived?: number, changeReturned?: number) => {
     const w = window.open('', 'PRINT', 'height=600,width=400');
     if (!w) { toast.error('Popup blocked. Allow popups to print.'); return; }
     const widthMm = paperSize === '58mm' ? '58mm' : '80mm';
@@ -111,6 +114,10 @@ h2 { margin: 0; font-size: ${paperSize === '58mm' ? '14px' : '16px'}; }
     <td>TOTAL</td><td class="amt">${currency} ${total.toFixed(2)}</td>
   </tr>
 </table>
+${paymentMethod === 'cash' && amountReceived != null ? `<table class="small" style="margin-top:4px;">
+  <tr><td>Cash Received</td><td class="amt">${currency} ${amountReceived.toFixed(2)}</td></tr>
+  <tr><td>Change Returned</td><td class="amt">${currency} ${(changeReturned ?? 0).toFixed(2)}</td></tr>
+</table>` : ''}
 <hr/>
 <div class="center small">Thank you!</div>
 <script>window.onload = function(){ window.focus(); window.print(); setTimeout(function(){ window.close(); }, 500); };<\/script>
@@ -119,7 +126,7 @@ h2 { margin: 0; font-size: ${paperSize === '58mm' ? '14px' : '16px'}; }
     w.document.close();
   };
 
-  const checkout = async (printAfter: boolean) => {
+  const doCheckout = async (printAfter: boolean, amountReceived?: number, changeReturned?: number) => {
     if (cart.length === 0) { toast.error('Cart is empty'); return; }
     if (!outlet?.id) return;
     setPlacing(true);
@@ -150,18 +157,30 @@ h2 { margin: 0; font-size: ${paperSize === '58mm' ? '14px' : '16px'}; }
       await supabase.from('payments').insert({
         order_id: order.id, outlet_id: outlet.id,
         amount: Math.round(total), method: paymentMethodEnum as any, status: 'paid',
-        amount_received: Math.round(total), change_returned: 0,
+        amount_received: Math.round(amountReceived ?? total),
+        change_returned: Math.round(changeReturned ?? 0),
       } as any);
 
       const orderNumber = order.id.slice(-6).toUpperCase();
       toast.success(`Sale complete · ${orderNumber}`);
-      if (printAfter) printReceipt(orderNumber);
+      if (printAfter) printReceipt(orderNumber, amountReceived, changeReturned);
       setCart([]);
+      setCashDialogOpen(false);
     } catch (err: any) {
       toast.error(err.message || 'Checkout failed');
     } finally {
       setPlacing(false);
     }
+  };
+
+  const checkout = (printAfter: boolean) => {
+    if (cart.length === 0) { toast.error('Cart is empty'); return; }
+    if (paymentMethod === 'cash') {
+      setPrintAfterPay(printAfter);
+      setCashDialogOpen(true);
+      return;
+    }
+    doCheckout(printAfter);
   };
 
   return (
@@ -287,6 +306,15 @@ h2 { margin: 0; font-size: ${paperSize === '58mm' ? '14px' : '16px'}; }
           </div>
         </Card>
       </div>
+
+      <CashConfirmationDialog
+        open={cashDialogOpen}
+        onClose={() => setCashDialogOpen(false)}
+        grandTotal={Math.round(total)}
+        cashHandlingMode="counter"
+        submitting={placing}
+        onConfirm={(amountReceived, changeReturned) => doCheckout(printAfterPay, amountReceived, changeReturned)}
+      />
     </div>
   );
 }
