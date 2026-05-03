@@ -1133,6 +1133,15 @@ export type Database = {
         Args: { _outlet_id: string; _reason: string; _types: string[] }
         Returns: Json
       }
+      customer_cancel_orders: {
+        Args: {
+          _details?: string
+          _order_ids: string[]
+          _reason: string
+          _session_id: string
+        }
+        Returns: Json
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
