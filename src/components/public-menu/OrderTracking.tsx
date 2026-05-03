@@ -49,6 +49,7 @@ interface OrderTrackingProps {
   outletInfo?: OutletInfo | null;
   tableNumber?: string | null;
   onAllClosed?: () => void;
+  sessionId?: string;
 }
 
 interface RoundData {
@@ -99,7 +100,7 @@ async function fileToBase64(file: File) {
   });
 }
 
-export default function OrderTracking({ orderIds, outletName, orderType, outletSettings, paymentInfo, outletId, onOrderMore, outletInfo, tableNumber, onAllClosed }: OrderTrackingProps) {
+export default function OrderTracking({ orderIds, outletName, orderType, outletSettings, paymentInfo, outletId, onOrderMore, outletInfo, tableNumber, onAllClosed, sessionId }: OrderTrackingProps) {
   const [rounds, setRounds] = useState<RoundData[]>([]);
   const [showBill, setShowBill] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<'cash' | 'online' | null>(null);
@@ -790,6 +791,7 @@ export default function OrderTracking({ orderIds, outletName, orderType, outletS
         open={cancelOpen}
         onClose={() => setCancelOpen(false)}
         orderIds={orderIds}
+        sessionId={sessionId || ''}
         onCancelled={() => {
           setRounds(prev => prev.map(r => ({ ...r, status: 'cancelled' })));
           if (onAllClosed) onAllClosed();

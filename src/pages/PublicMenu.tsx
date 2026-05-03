@@ -259,6 +259,7 @@ export default function PublicMenu() {
         orderIds={orderIds}
         outletName={outlet.name}
         orderType={orderType}
+        sessionId={sessionId}
         outletSettings={settings}
         paymentInfo={{
           bank_name: settings?.bank_name || null,

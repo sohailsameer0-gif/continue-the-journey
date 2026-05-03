@@ -137,11 +137,29 @@ export function useOrderNotifications(outletId?: string) {
   // Listen for order status updates to remove from pending when accepted
   const handleOrderUpdate = useCallback((payload: any) => {
     const updated = payload.new;
+    const prev = payload.old;
     if (updated.status !== 'pending') {
       setPendingOrderIds(prev => {
         const next = new Set(prev);
         next.delete(updated.id);
         return next;
+      });
+    }
+    // Customer-initiated cancellation: alert outlet
+    if (
+      !isFirstLoad.current &&
+      updated.status === 'cancelled' &&
+      updated.cancelled_by === 'customer'
+    ) {
+      playNotificationSound();
+      const reason = updated.cancellation_reason || 'No reason given';
+      toast.error('❌ Order cancelled by customer', {
+        description: `${updated.customer_name || 'Customer'} • Reason: ${reason}`,
+        duration: 10000,
+        action: {
+          label: 'View Orders',
+          onClick: () => { window.location.pathname = '/outlet/orders'; },
+        },
       });
     }
     queryClient.invalidateQueries({ queryKey: ['orders'] });
