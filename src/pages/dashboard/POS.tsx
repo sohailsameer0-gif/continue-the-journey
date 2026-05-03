@@ -133,7 +133,7 @@ h2 { margin: 0; font-size: ${paperSize === '58mm' ? '14px' : '16px'}; }
         service_charge: Math.round(serviceCharge),
         delivery_charge: 0,
         total: Math.round(total),
-        status: 'closed',
+        status: 'picked_up',
         payment_status: 'paid',
         payment_method: paymentMethodEnum as any,
         special_instructions: 'POS sale',
