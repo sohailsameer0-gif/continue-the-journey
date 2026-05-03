@@ -50,11 +50,10 @@ export function getTrackingStatusesForOrderType(orderType: string): OrderStatus[
 
 export function isOperationallyCompleteStatus(_orderType: string, status?: string | null): boolean {
   // An order is only removed from the active list when the outlet explicitly
-  // marks it 'closed' (or it was 'cancelled'). Intermediate "fulfilled" states
-  // like delivered / picked_up / served keep the order active so the outlet
-  // can still receive payment, print bills, etc.
+  // marks it 'closed'. Cancelled orders stay in Active Orders so the outlet
+  // can clearly see customer-cancelled orders before closing them out.
   if (!status) return false;
-  return status === 'cancelled' || status === 'closed';
+  return status === 'closed';
 }
 
 export function isCustomerTrackableStatus(orderType: string, status?: string | null): boolean {
