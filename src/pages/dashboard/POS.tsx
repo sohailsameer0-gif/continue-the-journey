@@ -26,8 +26,6 @@ export default function POS() {
   const [activeCat, setActiveCat] = useState<string>('all');
   const [search, setSearch] = useState('');
   const [cart, setCart] = useState<CartItem[]>([]);
-  const [discountType, setDiscountType] = useState<'fixed' | 'percent'>('fixed');
-  const [discountValue, setDiscountValue] = useState('');
   const [paymentMethod, setPaymentMethod] = useState<'cash' | 'card' | 'online'>('cash');
   const [paperSize, setPaperSize] = useState<'58mm' | '80mm'>('80mm');
   const [placing, setPlacing] = useState(false);
@@ -55,16 +53,9 @@ export default function POS() {
   const remove = (id: string) => setCart(prev => prev.filter(c => c.id !== id));
 
   const subtotal = cart.reduce((s, c) => s + c.price * c.quantity, 0);
-  const discountAmount = (() => {
-    const v = Number(discountValue) || 0;
-    if (v <= 0) return 0;
-    if (discountType === 'percent') return Math.min(subtotal, (subtotal * v) / 100);
-    return Math.min(subtotal, v);
-  })();
-  const afterDiscount = Math.max(0, subtotal - discountAmount);
-  const serviceCharge = (afterDiscount * serviceChargeRate) / 100;
-  const tax = ((afterDiscount + serviceCharge) * taxRate) / 100;
-  const total = afterDiscount + serviceCharge + tax;
+  const serviceCharge = (subtotal * serviceChargeRate) / 100;
+  const tax = ((subtotal + serviceCharge) * taxRate) / 100;
+  const total = subtotal + serviceCharge + tax;
 
   const fmt = (n: number) => `${currency} ${n.toFixed(2)}`;
 
@@ -111,7 +102,6 @@ h2 { margin: 0; font-size: ${paperSize === '58mm' ? '14px' : '16px'}; }
 <hr/>
 <table class="small">
   <tr><td>Subtotal</td><td class="amt">${subtotal.toFixed(2)}</td></tr>
-  ${discountAmount > 0 ? `<tr><td>Discount</td><td class="amt">-${discountAmount.toFixed(2)}</td></tr>` : ''}
   ${serviceCharge > 0 ? `<tr><td>Service (${serviceChargeRate}%)</td><td class="amt">${serviceCharge.toFixed(2)}</td></tr>` : ''}
   ${tax > 0 ? `<tr><td>Tax (${taxRate}%)</td><td class="amt">${tax.toFixed(2)}</td></tr>` : ''}
 </table>
@@ -143,10 +133,10 @@ h2 { margin: 0; font-size: ${paperSize === '58mm' ? '14px' : '16px'}; }
         service_charge: Math.round(serviceCharge),
         delivery_charge: 0,
         total: Math.round(total),
-        status: 'completed',
+        status: 'closed',
         payment_status: 'paid',
         payment_method: paymentMethodEnum as any,
-        special_instructions: discountAmount > 0 ? `POS · Discount ${discountType === 'percent' ? discountValue + '%' : currency + ' ' + discountAmount.toFixed(2)}` : 'POS sale',
+        special_instructions: 'POS sale',
         customer_name: 'Walk-in',
         session_id: 'pos-' + Date.now(),
       } as any).select().single();
@@ -167,7 +157,6 @@ h2 { margin: 0; font-size: ${paperSize === '58mm' ? '14px' : '16px'}; }
       toast.success(`Sale complete · ${orderNumber}`);
       if (printAfter) printReceipt(orderNumber);
       setCart([]);
-      setDiscountValue('');
     } catch (err: any) {
       toast.error(err.message || 'Checkout failed');
     } finally {
