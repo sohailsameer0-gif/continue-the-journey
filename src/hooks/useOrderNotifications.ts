@@ -149,7 +149,6 @@ export function useOrderNotifications(outletId?: string) {
     if (
       !isFirstLoad.current &&
       updated.status === 'cancelled' &&
-      prev?.status !== 'cancelled' &&
       updated.cancelled_by === 'customer'
     ) {
       playNotificationSound();
