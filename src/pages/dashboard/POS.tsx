@@ -252,26 +252,8 @@ h2 { margin: 0; font-size: ${paperSize === '58mm' ? '14px' : '16px'}; }
           </ScrollArea>
 
           <div className="p-4 border-t space-y-3 bg-muted/30">
-            <div className="grid grid-cols-[1fr_2fr] gap-2 items-end">
-              <div className="space-y-1">
-                <Label className="text-xs">Discount</Label>
-                <Select value={discountType} onValueChange={v => setDiscountType(v as any)}>
-                  <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="fixed">{currency}</SelectItem>
-                    <SelectItem value="percent">%</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-1">
-                <Label className="text-xs">Value</Label>
-                <Input type="number" inputMode="decimal" value={discountValue} onChange={e => setDiscountValue(e.target.value)} placeholder="0" className="h-9" />
-              </div>
-            </div>
-
             <div className="space-y-1 text-sm">
               <div className="flex justify-between"><span className="text-muted-foreground">Subtotal</span><span>{fmt(subtotal)}</span></div>
-              {discountAmount > 0 && <div className="flex justify-between text-destructive"><span>Discount</span><span>-{fmt(discountAmount)}</span></div>}
               {serviceCharge > 0 && <div className="flex justify-between text-muted-foreground"><span>Service ({serviceChargeRate}%)</span><span>{fmt(serviceCharge)}</span></div>}
               {tax > 0 && <div className="flex justify-between text-muted-foreground"><span>Tax ({taxRate}%)</span><span>{fmt(tax)}</span></div>}
               <div className="flex justify-between text-lg font-bold pt-1 border-t mt-1"><span>TOTAL</span><span className="text-primary">{fmt(total)}</span></div>
