@@ -10,6 +10,7 @@ interface Props {
   open: boolean;
   onClose: () => void;
   orderIds: string[];
+  sessionId: string;
   onCancelled: () => void;
 }
 
@@ -22,7 +23,7 @@ const REASONS = [
   'Other',
 ];
 
-export default function CancelOrderDialog({ open, onClose, orderIds, onCancelled }: Props) {
+export default function CancelOrderDialog({ open, onClose, orderIds, sessionId, onCancelled }: Props) {
   const [reason, setReason] = useState<string>('');
   const [details, setDetails] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -32,17 +33,14 @@ export default function CancelOrderDialog({ open, onClose, orderIds, onCancelled
     if (reason === 'Other' && details.trim().length < 3) { toast.error('Please describe the reason'); return; }
     setSubmitting(true);
     try {
-      const { error } = await supabase
-        .from('orders')
-        .update({
-          status: 'cancelled',
-          cancellation_reason: reason,
-          cancellation_reason_text: details.trim() || null,
-          cancelled_by: 'customer',
-          cancelled_at: new Date().toISOString(),
-        } as any)
-        .in('id', orderIds);
+      const { data, error } = await (supabase as any).rpc('customer_cancel_orders', {
+        _order_ids: orderIds,
+        _session_id: sessionId,
+        _reason: reason,
+        _details: details.trim() || null,
+      });
       if (error) throw error;
+      if (!data?.ok) throw new Error(data?.message || 'Failed to cancel');
       toast.success('Order cancelled');
       onCancelled();
       onClose();
