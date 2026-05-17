@@ -95,11 +95,9 @@ export default function Auth() {
           <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-xl gradient-primary">
             <UtensilsCrossed className="h-6 w-6 text-primary-foreground" />
           </div>
-          <CardTitle asChild className="font-heading text-2xl">
-            <h1>
-              {mode === 'login' ? 'Welcome Back' : mode === 'signup' ? 'Start Free Demo' : 'Reset Password'}
-            </h1>
-          </CardTitle>
+          <h1 className="font-heading text-2xl font-semibold leading-none tracking-tight">
+            {mode === 'login' ? 'Welcome Back' : mode === 'signup' ? 'Start Free Demo' : 'Reset Password'}
+          </h1>
           <CardDescription>
             {mode === 'login' ? 'Sign in to manage your outlet' : mode === 'signup' ? 'Get 7 days free to try everything' : "We'll send you a reset link"}
           </CardDescription>
