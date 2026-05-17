@@ -300,7 +300,7 @@ export default function PublicMenu() {
   return (
     <div className="min-h-screen bg-background pb-28 max-w-lg mx-auto relative">
       <MenuHeader outlet={outlet} />
-
+      <main>
       {orderIds.length > 0 && (
         <div className="mx-4 mt-3">
           <button
@@ -430,6 +430,7 @@ export default function PublicMenu() {
           );
         })}
       </div>
+      </main>
 
       {/* Floating Cart Button */}
       {cartCount > 0 && !showCart && (
