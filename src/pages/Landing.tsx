@@ -67,6 +67,7 @@ export default function Landing() {
       </header>
 
       {/* Hero */}
+      <main>
       <section className="container py-12 md:py-20">
         <div className="grid gap-8 lg:grid-cols-2 lg:items-center">
           <div className="space-y-6 animate-fade-in">
@@ -91,7 +92,7 @@ export default function Landing() {
             <p className="text-sm text-muted-foreground">✓ 7 days free &nbsp; ✓ No credit card &nbsp; ✓ PKR currency</p>
           </div>
           <div className="relative animate-fade-in" style={{ animationDelay: '0.2s' }}>
-            <img src={heroImage} alt="QR menu ordering illustration" className="rounded-2xl shadow-card-hover w-full" loading="lazy" />
+            <img src={heroImage} alt="QR menu ordering illustration" width={1024} height={768} fetchPriority="high" decoding="async" className="rounded-2xl shadow-card-hover w-full h-auto" />
           </div>
         </div>
       </section>
@@ -146,6 +147,7 @@ export default function Landing() {
           </Button>
         </div>
       </section>
+      </main>
 
       {/* Footer */}
       <footer className="border-t py-8">

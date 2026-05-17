@@ -90,7 +90,7 @@ export default function CartSheet({
               <p className="text-[11px] text-muted-foreground">{itemCount} item{itemCount > 1 ? 's' : ''} · {orderLabel}</p>
             </div>
           </div>
-          <button onClick={onClose} className="h-9 w-9 rounded-full bg-muted hover:bg-muted/80 flex items-center justify-center transition-colors">
+          <button onClick={onClose} aria-label="Close cart" className="h-9 w-9 rounded-full bg-muted hover:bg-muted/80 flex items-center justify-center transition-colors">
             <X className="h-5 w-5 text-muted-foreground" />
           </button>
         </div>
@@ -111,11 +111,11 @@ export default function CartSheet({
                 <p className="text-xs text-muted-foreground mt-0.5">Rs.{item.price} × {item.quantity} = <span className="font-semibold text-foreground">Rs.{item.price * item.quantity}</span></p>
               </div>
               <div className="flex items-center gap-1 bg-muted rounded-full p-0.5">
-                <button onClick={() => onUpdateQty(item.id, -1)} className="h-7 w-7 rounded-full bg-background flex items-center justify-center shadow-sm active:scale-90 transition-transform">
+                <button onClick={() => onUpdateQty(item.id, -1)} aria-label={`Decrease quantity of ${item.name}`} className="h-7 w-7 rounded-full bg-background flex items-center justify-center shadow-sm active:scale-90 transition-transform">
                   <Minus className="h-3 w-3" />
                 </button>
                 <span className="w-5 text-center text-sm font-bold text-foreground">{item.quantity}</span>
-                <button onClick={() => onUpdateQty(item.id, 1)} className="h-7 w-7 rounded-full bg-primary text-primary-foreground flex items-center justify-center shadow-sm active:scale-90 transition-transform">
+                <button onClick={() => onUpdateQty(item.id, 1)} aria-label={`Increase quantity of ${item.name}`} className="h-7 w-7 rounded-full bg-primary text-primary-foreground flex items-center justify-center shadow-sm active:scale-90 transition-transform">
                   <Plus className="h-3 w-3" />
                 </button>
               </div>
