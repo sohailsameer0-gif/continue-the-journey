@@ -95,8 +95,10 @@ export default function Auth() {
           <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-xl gradient-primary">
             <UtensilsCrossed className="h-6 w-6 text-primary-foreground" />
           </div>
-          <CardTitle className="font-heading text-2xl">
-            {mode === 'login' ? 'Welcome Back' : mode === 'signup' ? 'Start Free Demo' : 'Reset Password'}
+          <CardTitle asChild className="font-heading text-2xl">
+            <h1>
+              {mode === 'login' ? 'Welcome Back' : mode === 'signup' ? 'Start Free Demo' : 'Reset Password'}
+            </h1>
           </CardTitle>
           <CardDescription>
             {mode === 'login' ? 'Sign in to manage your outlet' : mode === 'signup' ? 'Get 7 days free to try everything' : "We'll send you a reset link"}
@@ -141,7 +143,7 @@ export default function Auth() {
                 <Label htmlFor="password">Password</Label>
                 <div className="relative">
                   <Input id="password" type={showPassword ? 'text' : 'password'} placeholder="••••••••" value={password} onChange={e => setPassword(e.target.value)} required minLength={6} />
-                  <button type="button" className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground" onClick={() => setShowPassword(!showPassword)}>
+                  <button type="button" aria-label={showPassword ? 'Hide password' : 'Show password'} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground" onClick={() => setShowPassword(!showPassword)}>
                     {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   </button>
                 </div>
