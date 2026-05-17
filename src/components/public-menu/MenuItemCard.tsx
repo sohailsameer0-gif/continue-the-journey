@@ -85,11 +85,11 @@ export default function MenuItemCard({ item, quantity, onAdd, onIncrement, onDec
 
             {quantity > 0 ? (
               <div className="flex items-center gap-0.5 bg-primary rounded-full shadow-md">
-                <button onClick={onDecrement} className="h-8 w-8 rounded-full flex items-center justify-center text-primary-foreground hover:bg-primary-foreground/10 active:scale-90 transition-all">
+                <button onClick={onDecrement} aria-label="Decrease quantity" className="h-8 w-8 rounded-full flex items-center justify-center text-primary-foreground hover:bg-primary-foreground/10 active:scale-90 transition-all">
                   <Minus className="h-3.5 w-3.5" />
                 </button>
                 <span className="font-bold text-sm w-6 text-center text-primary-foreground">{quantity}</span>
-                <button onClick={onIncrement} className="h-8 w-8 rounded-full flex items-center justify-center text-primary-foreground hover:bg-primary-foreground/10 active:scale-90 transition-all">
+                <button onClick={onIncrement} aria-label="Increase quantity" className="h-8 w-8 rounded-full flex items-center justify-center text-primary-foreground hover:bg-primary-foreground/10 active:scale-90 transition-all">
                   <Plus className="h-3.5 w-3.5" />
                 </button>
               </div>
