@@ -1,0 +1,11 @@
+# MenuQR
+
+> MenuQR is a QR menu and table-ordering platform for restaurants, cafes, and food outlets in Pakistan. Customers scan a QR code, browse the digital menu, order from their table, and request the bill — no app download needed.
+
+## Pages
+
+- [Home](/): Product overview, features, and how it works.
+
+## Optional
+
+- [Sign In / Start Free Demo](/auth): Account creation and login for outlet owners.
