@@ -377,7 +377,7 @@ export default function PublicMenu() {
               className="w-full h-10 pl-9 pr-9 rounded-xl bg-muted/60 border-0 text-sm text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:ring-2 focus:ring-primary/30 transition-all"
             />
             {searchQuery && (
-              <button onClick={() => setSearchQuery('')} className="absolute right-3 top-1/2 -translate-y-1/2">
+              <button onClick={() => setSearchQuery('')} aria-label="Clear search" className="absolute right-3 top-1/2 -translate-y-1/2">
                 <X className="h-4 w-4 text-muted-foreground" />
               </button>
             )}
