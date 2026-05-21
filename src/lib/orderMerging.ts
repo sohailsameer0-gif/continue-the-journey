@@ -16,18 +16,21 @@
 // Statuses that exclude an order from ANY merge group entirely.
 // Closed means the outlet has finished/acknowledged the order; it must never
 // combine with a later order from the same customer/table.
-export const FINAL_STATUSES = new Set(['cancelled', 'closed']);
+export const FINAL_STATUSES = new Set(["cancelled", "closed"]);
 
 export function isFinalStatus(status?: string | null): boolean {
   return !!status && FINAL_STATUSES.has(status);
 }
 
 export function isPaid(paymentStatus?: string | null): boolean {
-  return paymentStatus === 'paid';
+  return paymentStatus === "paid";
 }
 
 /** An order is "active for billing" when it's not cancelled/closed AND not fully paid. */
-export function isActiveForBilling(order: { status?: string | null; payment_status?: string | null }): boolean {
+export function isActiveForBilling(order: {
+  status?: string | null;
+  payment_status?: string | null;
+}): boolean {
   return !isFinalStatus(order.status) && !isPaid(order.payment_status);
 }
 
@@ -47,22 +50,24 @@ export function getMergeKey(order: MergeableOrder): string | null {
   // Cancelled or already-paid orders don't belong to the active merge group.
   if (!isActiveForBilling(order)) return null;
 
-  const ot = order.order_type || (order.table_id ? 'dine_in' : 'delivery');
+  const ot = order.order_type || (order.table_id ? "dine_in" : "delivery");
 
-  if (ot === 'dine_in') {
+  if (ot === "dine_in") {
     if (!order.table_id) return null;
     // Strict per-visitor merge: a new customer at the same table gets a new
     // session_id (set client-side per visit), so they never merge into the
     // previous customer's bill. Legacy rows without session_id fall back to
     // their own id so they never merge with anything else.
     const sid = order.session_id || `__noSession__${order.id}`;
-    return `dine|${order.outlet_id || ''}|${order.table_id}|${sid}`;
+    return `dine|${order.outlet_id || ""}|${order.table_id}|${sid}`;
   }
 
-  if (ot === 'delivery' || ot === 'takeaway') {
+  if (ot === "delivery" || ot === "takeaway") {
     if (!order.customer_phone) return null;
-    const day = order.created_at ? new Date(order.created_at).toISOString().slice(0, 10) : 'no_date';
-    return `${ot}|${order.outlet_id || ''}|${order.customer_phone}|${day}`;
+    const day = order.created_at
+      ? new Date(order.created_at).toISOString().slice(0, 10)
+      : "no_date";
+    return `${ot}|${order.outlet_id || ""}|${order.customer_phone}|${day}`;
   }
 
   return null;
@@ -75,6 +80,6 @@ export function getMergeKey(order: MergeableOrder): string | null {
 export function findMergedOrders<T extends MergeableOrder>(target: T, all: T[]): T[] {
   const key = getMergeKey(target);
   if (!key) return [target];
-  const sameKey = all.filter(o => isActiveForBilling(o) && getMergeKey(o) === key);
+  const sameKey = all.filter((o) => isActiveForBilling(o) && getMergeKey(o) === key);
   return sameKey.length ? sameKey : [target];
 }
