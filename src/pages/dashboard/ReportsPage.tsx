@@ -34,6 +34,9 @@ function useOutletPayments(outletId?: string) {
 
 type DateRange = { from: Date; to?: Date };
 
+const isCancelledOrder = (order: any) =>
+  order?.status === 'cancelled' || !!order?.cancelled_at || !!order?.cancelled_by;
+
 export default function ReportsPage() {
   const { data: outlet } = useOutlet();
   const { data: orders } = useOrders(outlet?.id);
@@ -78,14 +81,14 @@ export default function ReportsPage() {
   }, [orders, rangeFrom, rangeTo, filterOrderType, filterRider, filterWaiter]);
 
   const salesOrders = useMemo(
-    () => filteredOrders.filter((o: any) => o.status !== 'cancelled'),
+    () => filteredOrders.filter((o: any) => !isCancelledOrder(o)),
     [filteredOrders]
   );
 
   const cancelledOrders = useMemo(() => {
     if (!orders) return [];
     return orders.filter(o => {
-      if ((o as any).status !== 'cancelled') return false;
+      if (!isCancelledOrder(o as any)) return false;
       const dateStr = (o as any).cancelled_at || o.created_at;
       const date = parseISO(dateStr!);
       if (!isWithinInterval(date, { start: rangeFrom, end: rangeTo })) return false;
