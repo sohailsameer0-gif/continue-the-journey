@@ -7,7 +7,7 @@ export const DELIVERY_STATUSES = ['pending', 'accepted', 'preparing', 'ready', '
 
 export const ALL_STATUSES = [
   'pending', 'accepted', 'preparing', 'ready', 'served', 'closed',
-  'ready_for_pickup', 'picked_up', 'out_for_delivery', 'delivered',
+  'ready_for_pickup', 'picked_up', 'out_for_delivery', 'delivered', 'cancelled',
 ] as const;
 
 export type OrderStatus = typeof ALL_STATUSES[number];
@@ -23,6 +23,7 @@ export const STATUS_DISPLAY_LABELS: Record<string, string> = {
   picked_up: 'Picked Up',
   out_for_delivery: 'Out for Delivery',
   delivered: 'Delivered',
+  cancelled: 'Cancelled',
 };
 
 export const STATUS_COLORS: Record<string, string> = {
@@ -36,6 +37,7 @@ export const STATUS_COLORS: Record<string, string> = {
   out_for_delivery: 'bg-secondary/15 text-secondary border-secondary/20',
   delivered: 'bg-muted text-muted-foreground border-muted',
   closed: 'bg-muted text-muted-foreground border-muted',
+  cancelled: 'bg-destructive/10 text-destructive border-destructive/30',
 };
 
 export function getStatusesForOrderType(orderType: string): OrderStatus[] {
@@ -61,6 +63,7 @@ export function isCustomerTrackableStatus(orderType: string, status?: string | n
 }
 
 export function isValidStatusForOrderType(orderType: string, status: string): status is OrderStatus {
+  if (status === 'cancelled') return true;
   return getStatusesForOrderType(orderType).includes(status as OrderStatus);
 }
 
