@@ -737,7 +737,9 @@ export default function OrdersDashboard() {
                 )}
 
                 {/* Cancellation reason (if cancelled) */}
-                {order.status === "cancelled" &&
+                {(order.status === "cancelled" ||
+                  (order as any).cancelled_at ||
+                  (order as any).cancelled_by) &&
                   ((order as any).cancellation_reason ||
                     (order as any).cancellation_reason_text) && (
                     <div className="bg-destructive/10 border border-destructive/20 rounded-md p-2.5 text-xs space-y-0.5">
