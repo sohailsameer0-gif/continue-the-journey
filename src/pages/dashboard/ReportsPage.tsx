@@ -73,11 +73,14 @@ export default function ReportsPage() {
       if (filterOrderType !== 'all' && (o as any).order_type !== filterOrderType) return false;
       if (filterRider !== 'all' && (o as any).rider_id !== filterRider) return false;
       if (filterWaiter !== 'all' && (o as any).waiter_id !== filterWaiter) return false;
-      // Exclude cancelled orders from main reports — shown separately
-      if ((o as any).status === 'cancelled') return false;
       return true;
     });
   }, [orders, rangeFrom, rangeTo, filterOrderType, filterRider, filterWaiter]);
+
+  const salesOrders = useMemo(
+    () => filteredOrders.filter((o: any) => o.status !== 'cancelled'),
+    [filteredOrders]
+  );
 
   const cancelledOrders = useMemo(() => {
     if (!orders) return [];
@@ -105,13 +108,13 @@ export default function ReportsPage() {
   const pendingAmount = pendingPayments.reduce((s, p) => s + Number(p.amount || 0), 0) + unpaidPayments.reduce((s, p) => s + Number(p.amount || 0), 0);
 
   const totalOrders = filteredOrders.length;
-  const paidOrdersCount = filteredOrders.filter(o => o.payment_status === 'paid').length;
-  const pendingOrdersCount = filteredOrders.filter(o => o.payment_status !== 'paid').length;
+  const paidOrdersCount = salesOrders.filter(o => o.payment_status === 'paid').length;
+  const pendingOrdersCount = salesOrders.filter(o => o.payment_status !== 'paid').length;
 
   // Order type breakdown
-  const dineInCount = filteredOrders.filter(o => (o as any).order_type === 'dine_in').length;
-  const takeawayCount = filteredOrders.filter(o => (o as any).order_type === 'takeaway').length;
-  const deliveryCount = filteredOrders.filter(o => (o as any).order_type === 'delivery').length;
+  const dineInCount = salesOrders.filter(o => (o as any).order_type === 'dine_in').length;
+  const takeawayCount = salesOrders.filter(o => (o as any).order_type === 'takeaway').length;
+  const deliveryCount = salesOrders.filter(o => (o as any).order_type === 'delivery').length;
 
   // Payment method breakdown
   const methodBreakdown = {
