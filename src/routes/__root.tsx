@@ -28,6 +28,9 @@ export const Route = createRootRoute({
       { name: "twitter:description", content: SITE_DESCRIPTION },
       { property: "og:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/RzPQE5ue3lOwC0LZc5OKWsKGyde2/social-images/social-1776842599558-MenuQR_ad.webp" },
       { name: "twitter:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/RzPQE5ue3lOwC0LZc5OKWsKGyde2/social-images/social-1776842599558-MenuQR_ad.webp" },
+      { name: "description", content: "This application manages restaurant orders, payments, and customer interactions." },
+      { property: "og:description", content: "This application manages restaurant orders, payments, and customer interactions." },
+      { name: "twitter:description", content: "This application manages restaurant orders, payments, and customer interactions." },
     ],
     links: [
       { rel: "stylesheet", href: appCss },
