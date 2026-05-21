@@ -1,11 +1,9 @@
 /**
  * Order merging rules (CORRECTED):
- *  - Merging is based on PAYMENT STATUS, not order workflow status.
+ *  - Merging is based on active billing lifecycle, then payment status.
  *  - An order belongs to the active merge group as long as it is UNPAID
- *    (payment_status !== 'paid'), regardless of whether it is served,
- *    delivered, picked up, or closed. The Combined Bill stays visible
- *    until the entire bill is paid.
- *  - Cancelled orders are ALWAYS excluded — they don't belong to any bill.
+ *    (payment_status !== 'paid') and not operationally final.
+ *  - Cancelled and closed orders are ALWAYS excluded — they don't belong to any bill.
  *  - Once an order is fully PAID, it leaves the active merge group.
  *    Any new order from the same customer/table after that becomes a new bill.
  *
@@ -16,8 +14,9 @@
  */
 
 // Statuses that exclude an order from ANY merge group entirely.
-// Only cancelled — paid orders are handled separately by payment_status.
-export const FINAL_STATUSES = new Set(['cancelled']);
+// Closed means the outlet has finished/acknowledged the order; it must never
+// combine with a later order from the same customer/table.
+export const FINAL_STATUSES = new Set(['cancelled', 'closed']);
 
 export function isFinalStatus(status?: string | null): boolean {
   return !!status && FINAL_STATUSES.has(status);
@@ -27,7 +26,7 @@ export function isPaid(paymentStatus?: string | null): boolean {
   return paymentStatus === 'paid';
 }
 
-/** An order is "active for billing" when it's not cancelled AND not fully paid. */
+/** An order is "active for billing" when it's not cancelled/closed AND not fully paid. */
 export function isActiveForBilling(order: { status?: string | null; payment_status?: string | null }): boolean {
   return !isFinalStatus(order.status) && !isPaid(order.payment_status);
 }
