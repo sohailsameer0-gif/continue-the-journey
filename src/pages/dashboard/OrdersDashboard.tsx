@@ -716,13 +716,17 @@ export default function OrdersDashboard() {
                         <Receipt className="h-3.5 w-3.5" /> Combined Bill ({mergedGroup.length})
                       </Button>
                     )}
-                    {order.payment_status !== 'paid' && (
+                    {order.status !== 'cancelled' && order.payment_status !== 'paid' && (
                       <Button variant="default" size="sm" className="gap-1 text-xs h-8" onClick={() => handleMarkPaid(order.id)}>
                         <CheckCircle className="h-3.5 w-3.5" /> Mark Paid
                       </Button>
                     )}
                   </div>
-                  {order.status !== 'closed' && (() => {
+                  {order.status === 'cancelled' ? (
+                    <Button variant="destructive" size="sm" className="gap-1 text-xs h-8" onClick={() => handleStatusChange(order.id, 'closed')}>
+                      <XCircle className="h-3.5 w-3.5" /> Close Cancelled
+                    </Button>
+                  ) : order.status !== 'closed' && (() => {
                     const statuses = getStatusesForOrderType(ot);
                      const selectedStatus = isValidStatusForOrderType(ot, order.status) ? order.status : statuses[0];
                     return (
