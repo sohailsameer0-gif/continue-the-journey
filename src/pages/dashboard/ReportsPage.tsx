@@ -155,6 +155,8 @@ export default function ReportsPage() {
       ['Online Collection', onlineCollection.toString()],
       ['Pending Amount', pendingAmount.toString()],
       ['Total Orders', totalOrders.toString()],
+      ['Sales Orders', salesOrders.length.toString()],
+      ['Cancelled Orders', cancelledOrders.length.toString()],
     ];
     const csv = rows.map(r => r.join(',')).join('\n');
     const blob = new Blob([csv], { type: 'text/csv' });
@@ -319,7 +321,7 @@ export default function ReportsPage() {
               <p className="text-xs text-muted-foreground">Total Orders</p>
             </div>
             <p className="text-xl font-bold font-heading text-foreground">{totalOrders}</p>
-            <p className="text-xs text-muted-foreground">{paidOrdersCount} paid · {pendingOrdersCount} pending</p>
+            <p className="text-xs text-muted-foreground">{salesOrders.length} sales · {cancelledOrders.length} cancelled</p>
           </CardContent>
         </Card>
       </div>
