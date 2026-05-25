@@ -6,7 +6,7 @@ import { useResolvedSubscription } from '@/hooks/useSubscription';
 import { PLAN_LABEL } from '@/lib/plans';
 import { useOrderNotifications } from '@/hooks/useOrderNotifications';
 import { Button } from '@/components/ui/button';
-import { UtensilsCrossed, LayoutDashboard, Store, UtensilsCrossed as MenuIcon, TableProperties, ShoppingCart, QrCode, CreditCard, Settings, LogOut, Menu, X, AlertTriangle, FileBarChart, Crown, Users, Calculator } from 'lucide-react';
+import { UtensilsCrossed, LayoutDashboard, Store, UtensilsCrossed as MenuIcon, TableProperties, ShoppingCart, QrCode, CreditCard, Settings, LogOut, Menu, X, AlertTriangle, FileBarChart, Crown, Users, Calculator, Package } from 'lucide-react';
 import logoImage from '@/assets/menuqr-logo.png';
 import OutletNotificationBell from '@/components/outlet/OutletNotificationBell';
 import SupportWhatsAppFab from '@/components/outlet/SupportWhatsAppFab';
@@ -15,6 +15,7 @@ const navItems = [
   { to: '/outlet', icon: LayoutDashboard, label: 'Overview', end: true },
   { to: '/outlet/profile', icon: Store, label: 'Outlet Profile' },
   { to: '/outlet/menu', icon: MenuIcon, label: 'Menu' },
+  { to: '/outlet/inventory', icon: Package, label: 'Inventory' },
   { to: '/outlet/tables', icon: TableProperties, label: 'Tables' },
   { to: '/outlet/orders', icon: ShoppingCart, label: 'Orders' },
   { to: '/outlet/pos', icon: Calculator, label: 'POS Lite' },
