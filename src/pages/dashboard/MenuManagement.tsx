@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { useEffect } from 'react';
 import { useOutlet, useMenuCategories, useMenuItems, useCreateCategory, useCreateMenuItem, useUpdateMenuItem, useDeleteMenuItem, useDeleteCategory } from '@/hooks/useData';
 import { useMenuItemVariants, useReplaceVariants, useUpdateInventory, useInventory } from '@/hooks/useInventory';
 import { useResolvedSubscription } from '@/hooks/useSubscription';
@@ -401,8 +400,9 @@ export default function MenuManagement() {
               <div className="space-y-2">
                 {catItems.map(item => (
                   <Card key={item.id} className="shadow-card">
-                    <CardContent className="flex items-center gap-4 py-3">
-                      <div className="h-12 w-12 rounded-lg overflow-hidden bg-muted shrink-0">
+                    <CardContent className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 py-3">
+                      <div className="flex items-start gap-3 flex-1 min-w-0">
+                      <div className="h-14 w-14 sm:h-12 sm:w-12 rounded-lg overflow-hidden bg-muted shrink-0">
                         {item.image_url ? (
                           <img src={item.image_url} alt={item.name} className="h-full w-full object-cover" />
                         ) : (
@@ -410,13 +410,17 @@ export default function MenuManagement() {
                         )}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2">
-                          <p className="font-medium text-foreground truncate">{item.name}</p>
-                          {item.tags?.map(t => <Badge key={t} variant="secondary" className="text-xs">{t}</Badge>)}
-                        </div>
-                        {item.description && <p className="text-xs text-muted-foreground truncate">{item.description}</p>}
+                        <p className="font-medium text-foreground line-clamp-2 break-words">{item.name}</p>
+                        {item.tags && item.tags.length > 0 && (
+                          <div className="flex flex-wrap gap-1 mt-1">
+                            {item.tags.map(t => <Badge key={t} variant="secondary" className="text-[10px]">{t}</Badge>)}
+                          </div>
+                        )}
+                        {item.description && <p className="text-xs text-muted-foreground line-clamp-2 mt-1">{item.description}</p>}
                       </div>
-                      <div className="text-right shrink-0">
+                      </div>
+                      <div className="flex items-center justify-between sm:justify-end gap-3 sm:gap-4 sm:shrink-0">
+                      <div className="text-left sm:text-right">
                         {item.discounted_price ? (
                           <div>
                             <span className="line-through text-xs text-muted-foreground">Rs. {item.price}</span>
@@ -427,20 +431,22 @@ export default function MenuManagement() {
                         )}
                       </div>
                       {!isLocked && (
-                        <div className="flex items-center gap-2 shrink-0">
+                        <div className="flex items-center gap-3 shrink-0">
                           <Switch checked={item.is_available ?? true} onCheckedChange={v => updateItem.mutate({ id: item.id, is_available: v })} />
                           <button
                             onClick={() => openEdit(item)}
-                            className="p-1.5 rounded hover:bg-primary/10 text-muted-foreground hover:text-primary"
+                            className="p-2 rounded hover:bg-primary/10 text-muted-foreground hover:text-primary"
+                            aria-label="Edit item"
                             title="Edit item"
                           >
                             <Edit className="h-4 w-4" />
                           </button>
-                          <button onClick={() => { deleteItem.mutate(item.id); toast.success('Deleted'); }} className="p-1.5 rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive">
+                          <button onClick={() => { deleteItem.mutate(item.id); toast.success('Deleted'); }} className="p-2 rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive" aria-label="Delete item">
                             <Trash2 className="h-4 w-4" />
                           </button>
                         </div>
                       )}
+                      </div>
                     </CardContent>
                   </Card>
                 ))}
