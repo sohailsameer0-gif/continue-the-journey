@@ -24,6 +24,7 @@ import SettingsPage from "./pages/dashboard/SettingsPage";
 import Subscribe from "./pages/dashboard/Subscribe";
 import StaffManagement from "./pages/dashboard/StaffManagement";
 import POS from "./pages/dashboard/POS";
+import InventoryPage from "./pages/dashboard/InventoryPage";
 import OutletVerify from "./pages/OutletVerify";
 import AdminLayout from "./components/admin/AdminLayout";
 import AdminDashboard from "./pages/admin/AdminDashboard";
@@ -63,6 +64,7 @@ const App = () => (
                 <Route path="tables" element={<TableManagement />} />
                 <Route path="orders" element={<OrdersDashboard />} />
                 <Route path="pos" element={<POS />} />
+                <Route path="inventory" element={<InventoryPage />} />
                 <Route path="staff" element={<StaffManagement />} />
                 <Route path="qr" element={<QRCodes />} />
                 <Route path="payments" element={<PaymentsDashboard />} />

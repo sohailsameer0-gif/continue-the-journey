@@ -12,7 +12,9 @@ export type OutletNotificationKind =
   | 'activity_reset'
   | 'admin_message'
   | 'payment_pending_verification'
-  | 'bill_requested';
+  | 'bill_requested'
+  | 'low_stock_warning'
+  | 'low_stock_critical';
 
 export interface OutletNotification {
   id: string;
@@ -111,14 +113,18 @@ export function useOutletNotifications(outletId?: string) {
 
 
       (msgRes.data ?? []).forEach((m: any) => {
-        const kind: OutletNotificationKind = m.kind === 'activity_reset' ? 'activity_reset' : 'admin_message';
+        const kind: OutletNotificationKind =
+          m.kind === 'activity_reset' ? 'activity_reset'
+          : m.kind === 'low_stock_warning' ? 'low_stock_warning'
+          : m.kind === 'low_stock_critical' ? 'low_stock_critical'
+          : 'admin_message';
         list.push({
           id: `msg:${m.id}`,
           kind,
           title: m.title,
           description: m.body,
           createdAt: m.created_at,
-          href: '/outlet',
+          href: (m.kind === 'low_stock_warning' || m.kind === 'low_stock_critical') ? '/outlet/inventory' : '/outlet',
           unread: !m.read_at,
         });
       });

@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useOutlet, useMenuCategories, useMenuItems, useCreateCategory, useCreateMenuItem, useUpdateMenuItem, useDeleteMenuItem, useDeleteCategory } from '@/hooks/useData';
+import { useMenuItemVariants, useReplaceVariants, useUpdateInventory, useInventory } from '@/hooks/useInventory';
 import { useResolvedSubscription } from '@/hooks/useSubscription';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -10,25 +11,43 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { toast } from 'sonner';
-import { Plus, Trash2, Edit, FolderPlus, AlertTriangle, ImageIcon } from 'lucide-react';
+import { Plus, Trash2, Edit, FolderPlus, AlertTriangle, ImageIcon, X } from 'lucide-react';
 import { MenuItemImageUpload } from '@/components/menu/MenuItemImageUpload';
+
+type VariantDraft = { label: string; price: string; weight_grams: string };
+
+const emptyVariant = (): VariantDraft => ({ label: '', price: '', weight_grams: '' });
 
 export default function MenuManagement() {
   const { data: outlet } = useOutlet();
   const { data: categories } = useMenuCategories(outlet?.id);
   const { data: items } = useMenuItems(outlet?.id);
+  const { data: variants } = useMenuItemVariants(outlet?.id);
+  const { data: inventory } = useInventory(outlet?.id);
   const { data: sub } = useResolvedSubscription(outlet?.id);
   const createCategory = useCreateCategory();
   const createItem = useCreateMenuItem();
   const updateItem = useUpdateMenuItem();
   const deleteItem = useDeleteMenuItem();
   const deleteCategory = useDeleteCategory();
+  const replaceVariants = useReplaceVariants();
+  const updateInv = useUpdateInventory();
 
   const [catName, setCatName] = useState('');
   const [showAddItem, setShowAddItem] = useState(false);
-  const [itemForm, setItemForm] = useState({ name: '', price: '', description: '', category_id: '', discounted_price: '', tags: [] as string[], image_url: '' });
+  const [itemForm, setItemForm] = useState({
+    name: '', price: '', description: '', category_id: '', discounted_price: '',
+    tags: [] as string[], image_url: '',
+    track_inventory: false, unit_type: 'qty' as 'qty' | 'kg', initial_stock: '0',
+    has_variants: false, variants: [emptyVariant(), emptyVariant(), emptyVariant()] as VariantDraft[],
+  });
   const [editItem, setEditItem] = useState<any | null>(null);
-  const [editForm, setEditForm] = useState({ name: '', price: '', description: '', category_id: '', discounted_price: '', tags: [] as string[], image_url: '' });
+  const [editForm, setEditForm] = useState({
+    name: '', price: '', description: '', category_id: '', discounted_price: '',
+    tags: [] as string[], image_url: '',
+    track_inventory: false, unit_type: 'qty' as 'qty' | 'kg', stock: '0',
+    has_variants: false, variants: [] as VariantDraft[],
+  });
 
   const itemLimit = sub?.limits?.maxMenuItems ?? 0; // 0 = unlimited
   const currentCount = items?.length ?? 0;
@@ -49,18 +68,48 @@ export default function MenuManagement() {
   const handleAddItem = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!canAddItem) return toast.error(itemLimit > 0 ? `Plan limit reached (${itemLimit} items). Upgrade to add more.` : 'Your plan does not allow adding items right now.');
+    const cleanVariants = itemForm.has_variants
+      ? itemForm.variants
+          .map(v => ({ label: v.label.trim(), price: Number(v.price) || 0, weight_grams: Number(v.weight_grams) || 0 }))
+          .filter(v => v.label && v.price > 0)
+      : [];
+    if (itemForm.has_variants && cleanVariants.length === 0) {
+      return toast.error('Add at least one size with a label and price.');
+    }
     try {
-      await createItem.mutateAsync({
+      const basePrice = itemForm.has_variants
+        ? Math.min(...cleanVariants.map(v => v.price))
+        : Number(itemForm.price);
+      const created: any = await createItem.mutateAsync({
         name: itemForm.name,
-        price: Number(itemForm.price),
+        price: basePrice,
         description: itemForm.description || undefined,
         category_id: itemForm.category_id,
         outlet_id: outlet.id,
         discounted_price: itemForm.discounted_price ? Number(itemForm.discounted_price) : undefined,
         tags: itemForm.tags,
         image_url: itemForm.image_url || undefined,
+        track_inventory: itemForm.track_inventory,
+        unit_type: itemForm.unit_type,
+        has_variants: itemForm.has_variants,
       });
-      setItemForm({ name: '', price: '', description: '', category_id: '', discounted_price: '', tags: [], image_url: '' });
+      if (itemForm.has_variants && created?.id) {
+        await replaceVariants.mutateAsync({ menu_item_id: created.id, variants: cleanVariants });
+      }
+      // Seed inventory stock (best-effort; row was auto-created by trigger)
+      if (itemForm.track_inventory) {
+        const stock = Number(itemForm.initial_stock) || 0;
+        // Find inventory row id via a quick refetch
+        const { supabase } = await import('@/integrations/supabase/client');
+        const { data: invRow } = await (supabase as any).from('inventory').select('id').eq('menu_item_id', created.id).maybeSingle();
+        if (invRow?.id) await updateInv.mutateAsync({ id: invRow.id, stock });
+      }
+      setItemForm({
+        name: '', price: '', description: '', category_id: '', discounted_price: '',
+        tags: [], image_url: '',
+        track_inventory: false, unit_type: 'qty', initial_stock: '0',
+        has_variants: false, variants: [emptyVariant(), emptyVariant(), emptyVariant()],
+      });
       setShowAddItem(false);
       toast.success('Item added!');
     } catch (err: any) { toast.error(err.message); }
@@ -82,6 +131,8 @@ export default function MenuManagement() {
 
   const openEdit = (item: any) => {
     setEditItem(item);
+    const itemVariants = (variants || []).filter(v => v.menu_item_id === item.id);
+    const inv = (inventory || []).find(i => i.menu_item_id === item.id);
     setEditForm({
       name: item.name || '',
       price: String(item.price ?? ''),
@@ -90,27 +141,152 @@ export default function MenuManagement() {
       discounted_price: item.discounted_price != null ? String(item.discounted_price) : '',
       tags: Array.isArray(item.tags) ? item.tags : [],
       image_url: item.image_url || '',
+      track_inventory: !!item.track_inventory,
+      unit_type: (item.unit_type === 'kg' ? 'kg' : 'qty'),
+      stock: inv ? String(inv.stock) : '0',
+      has_variants: !!item.has_variants,
+      variants: itemVariants.length > 0
+        ? itemVariants.map(v => ({ label: v.label, price: String(v.price), weight_grams: String(v.weight_grams) }))
+        : [emptyVariant(), emptyVariant(), emptyVariant()],
     });
   };
 
   const handleEditItem = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editItem) return;
+    const cleanVariants = editForm.has_variants
+      ? editForm.variants
+          .map(v => ({ label: v.label.trim(), price: Number(v.price) || 0, weight_grams: Number(v.weight_grams) || 0 }))
+          .filter(v => v.label && v.price > 0)
+      : [];
+    if (editForm.has_variants && cleanVariants.length === 0) {
+      return toast.error('Add at least one size with a label and price.');
+    }
     try {
+      const basePrice = editForm.has_variants
+        ? Math.min(...cleanVariants.map(v => v.price))
+        : Number(editForm.price);
       await updateItem.mutateAsync({
         id: editItem.id,
         name: editForm.name,
-        price: Number(editForm.price),
+        price: basePrice,
         description: editForm.description || '',
         category_id: editForm.category_id,
         discounted_price: editForm.discounted_price ? Number(editForm.discounted_price) : null,
         tags: editForm.tags,
         image_url: editForm.image_url || '',
+        track_inventory: editForm.track_inventory,
+        unit_type: editForm.unit_type,
+        has_variants: editForm.has_variants,
       });
+      await replaceVariants.mutateAsync({
+        menu_item_id: editItem.id,
+        variants: editForm.has_variants ? cleanVariants : [],
+      });
+      if (editForm.track_inventory) {
+        const inv = (inventory || []).find(i => i.menu_item_id === editItem.id);
+        if (inv) await updateInv.mutateAsync({ id: inv.id, stock: Number(editForm.stock) || 0 });
+      }
       setEditItem(null);
       toast.success('Item updated!');
     } catch (err: any) { toast.error(err.message); }
   };
+
+  const setVariantField = (which: 'add' | 'edit', idx: number, field: keyof VariantDraft, value: string) => {
+    if (which === 'add') {
+      setItemForm(f => ({ ...f, variants: f.variants.map((v, i) => i === idx ? { ...v, [field]: value } : v) }));
+    } else {
+      setEditForm(f => ({ ...f, variants: f.variants.map((v, i) => i === idx ? { ...v, [field]: value } : v) }));
+    }
+  };
+
+  const addVariantRow = (which: 'add' | 'edit') => {
+    if (which === 'add') setItemForm(f => ({ ...f, variants: [...f.variants, emptyVariant()] }));
+    else setEditForm(f => ({ ...f, variants: [...f.variants, emptyVariant()] }));
+  };
+
+  const removeVariantRow = (which: 'add' | 'edit', idx: number) => {
+    if (which === 'add') setItemForm(f => ({ ...f, variants: f.variants.filter((_, i) => i !== idx) }));
+    else setEditForm(f => ({ ...f, variants: f.variants.filter((_, i) => i !== idx) }));
+  };
+
+  const renderVariantEditor = (which: 'add' | 'edit', form: { has_variants: boolean; variants: VariantDraft[] }) => (
+    <div className="space-y-2 rounded-lg border border-dashed p-3 bg-muted/30">
+      <div className="flex items-center justify-between gap-2">
+        <Label className="text-xs font-semibold">Sizes (e.g. Fries Small/Medium/Large)</Label>
+        <Switch
+          checked={form.has_variants}
+          onCheckedChange={v => which === 'add'
+            ? setItemForm(f => ({ ...f, has_variants: v }))
+            : setEditForm(f => ({ ...f, has_variants: v }))}
+        />
+      </div>
+      {form.has_variants && (
+        <>
+          <p className="text-[11px] text-muted-foreground">
+            Customer sees only label + price. Grams are backend-only for stock deduction.
+          </p>
+          {form.variants.map((v, idx) => (
+            <div key={idx} className="grid grid-cols-12 gap-1.5 items-center">
+              <Input className="col-span-4 h-9 text-sm" placeholder="Label (Small)" value={v.label}
+                onChange={e => setVariantField(which, idx, 'label', e.target.value)} />
+              <Input className="col-span-3 h-9 text-sm" inputMode="numeric" placeholder="Price" value={v.price}
+                onChange={e => setVariantField(which, idx, 'price', e.target.value)} />
+              <Input className="col-span-4 h-9 text-sm" inputMode="numeric" placeholder="Grams (backend)" value={v.weight_grams}
+                onChange={e => setVariantField(which, idx, 'weight_grams', e.target.value)} />
+              <button type="button" className="col-span-1 text-muted-foreground hover:text-destructive p-1" aria-label="Remove size"
+                onClick={() => removeVariantRow(which, idx)}>
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+          ))}
+          <Button type="button" variant="ghost" size="sm" onClick={() => addVariantRow(which)}>
+            <Plus className="h-3.5 w-3.5 mr-1" /> Add size
+          </Button>
+        </>
+      )}
+    </div>
+  );
+
+  const renderInventoryEditor = (which: 'add' | 'edit', form: { track_inventory: boolean; unit_type: 'qty' | 'kg'; initial_stock?: string; stock?: string }) => (
+    <div className="space-y-2 rounded-lg border border-dashed p-3 bg-muted/30">
+      <div className="flex items-center justify-between gap-2">
+        <Label className="text-xs font-semibold">Track inventory</Label>
+        <Switch
+          checked={form.track_inventory}
+          onCheckedChange={v => which === 'add'
+            ? setItemForm(f => ({ ...f, track_inventory: v }))
+            : setEditForm(f => ({ ...f, track_inventory: v }))}
+        />
+      </div>
+      {form.track_inventory && (
+        <div className="grid grid-cols-2 gap-2">
+          <div>
+            <Label className="text-[11px]">Unit</Label>
+            <Select
+              value={form.unit_type}
+              onValueChange={(v: 'qty' | 'kg') => which === 'add'
+                ? setItemForm(f => ({ ...f, unit_type: v }))
+                : setEditForm(f => ({ ...f, unit_type: v }))}>
+              <SelectTrigger className="h-9 text-sm"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="qty">Quantity (pieces)</SelectItem>
+                <SelectItem value="kg">Weight (grams)</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <Label className="text-[11px]">{which === 'add' ? 'Starting stock' : 'Current stock'}</Label>
+            <Input type="number" inputMode="numeric" className="h-9 text-sm"
+              value={which === 'add' ? (form.initial_stock ?? '0') : (form.stock ?? '0')}
+              onChange={e => which === 'add'
+                ? setItemForm(f => ({ ...f, initial_stock: e.target.value }))
+                : setEditForm(f => ({ ...f, stock: e.target.value }))} />
+          </div>
+        </div>
+      )}
+    </div>
+  );
 
   return (
     <div className="space-y-6">
@@ -157,7 +333,7 @@ export default function MenuManagement() {
           <DialogTrigger asChild>
             <Button variant="hero" disabled={!canAddItem}><Plus className="h-4 w-4 mr-1" /> Add Menu Item</Button>
           </DialogTrigger>
-          <DialogContent className="max-w-md">
+          <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
             <DialogHeader><DialogTitle className="font-heading">Add Menu Item</DialogTitle></DialogHeader>
             <form onSubmit={handleAddItem} className="space-y-4">
               <div className="space-y-2">
@@ -171,16 +347,20 @@ export default function MenuManagement() {
                   <SelectContent>{categories?.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}</SelectContent>
                 </Select>
               </div>
+              {!itemForm.has_variants && (
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-2">
                   <Label>Price (PKR) *</Label>
-                  <Input type="number" value={itemForm.price} onChange={e => setItemForm(f => ({ ...f, price: e.target.value }))} required min="0" />
+                  <Input type="number" value={itemForm.price} onChange={e => setItemForm(f => ({ ...f, price: e.target.value }))} required={!itemForm.has_variants} min="0" />
                 </div>
                 <div className="space-y-2">
                   <Label>Sale Price</Label>
                   <Input type="number" value={itemForm.discounted_price} onChange={e => setItemForm(f => ({ ...f, discounted_price: e.target.value }))} min="0" />
                 </div>
               </div>
+              )}
+              {renderVariantEditor('add', itemForm)}
+              {renderInventoryEditor('add', itemForm)}
               <div className="space-y-2">
                 <Label>Description</Label>
                 <Input value={itemForm.description} onChange={e => setItemForm(f => ({ ...f, description: e.target.value }))} />
@@ -220,8 +400,9 @@ export default function MenuManagement() {
               <div className="space-y-2">
                 {catItems.map(item => (
                   <Card key={item.id} className="shadow-card">
-                    <CardContent className="flex items-center gap-4 py-3">
-                      <div className="h-12 w-12 rounded-lg overflow-hidden bg-muted shrink-0">
+                    <CardContent className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 py-3">
+                      <div className="flex items-start gap-3 flex-1 min-w-0">
+                      <div className="h-14 w-14 sm:h-12 sm:w-12 rounded-lg overflow-hidden bg-muted shrink-0">
                         {item.image_url ? (
                           <img src={item.image_url} alt={item.name} className="h-full w-full object-cover" />
                         ) : (
@@ -229,13 +410,17 @@ export default function MenuManagement() {
                         )}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2">
-                          <p className="font-medium text-foreground truncate">{item.name}</p>
-                          {item.tags?.map(t => <Badge key={t} variant="secondary" className="text-xs">{t}</Badge>)}
-                        </div>
-                        {item.description && <p className="text-xs text-muted-foreground truncate">{item.description}</p>}
+                        <p className="font-medium text-foreground line-clamp-2 break-words">{item.name}</p>
+                        {item.tags && item.tags.length > 0 && (
+                          <div className="flex flex-wrap gap-1 mt-1">
+                            {item.tags.map(t => <Badge key={t} variant="secondary" className="text-[10px]">{t}</Badge>)}
+                          </div>
+                        )}
+                        {item.description && <p className="text-xs text-muted-foreground line-clamp-2 mt-1">{item.description}</p>}
                       </div>
-                      <div className="text-right shrink-0">
+                      </div>
+                      <div className="flex items-center justify-between sm:justify-end gap-3 sm:gap-4 sm:shrink-0">
+                      <div className="text-left sm:text-right">
                         {item.discounted_price ? (
                           <div>
                             <span className="line-through text-xs text-muted-foreground">Rs. {item.price}</span>
@@ -246,20 +431,22 @@ export default function MenuManagement() {
                         )}
                       </div>
                       {!isLocked && (
-                        <div className="flex items-center gap-2 shrink-0">
+                        <div className="flex items-center gap-3 shrink-0">
                           <Switch checked={item.is_available ?? true} onCheckedChange={v => updateItem.mutate({ id: item.id, is_available: v })} />
                           <button
                             onClick={() => openEdit(item)}
-                            className="p-1.5 rounded hover:bg-primary/10 text-muted-foreground hover:text-primary"
+                            className="p-2 rounded hover:bg-primary/10 text-muted-foreground hover:text-primary"
+                            aria-label="Edit item"
                             title="Edit item"
                           >
                             <Edit className="h-4 w-4" />
                           </button>
-                          <button onClick={() => { deleteItem.mutate(item.id); toast.success('Deleted'); }} className="p-1.5 rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive">
+                          <button onClick={() => { deleteItem.mutate(item.id); toast.success('Deleted'); }} className="p-2 rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive" aria-label="Delete item">
                             <Trash2 className="h-4 w-4" />
                           </button>
                         </div>
                       )}
+                      </div>
                     </CardContent>
                   </Card>
                 ))}
@@ -285,16 +472,20 @@ export default function MenuManagement() {
                 <SelectContent>{categories?.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}</SelectContent>
               </Select>
             </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-2">
-                <Label>Price (PKR) *</Label>
-                <Input type="number" value={editForm.price} onChange={e => setEditForm(f => ({ ...f, price: e.target.value }))} required min="0" />
+            {!editForm.has_variants && (
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-2">
+                  <Label>Price (PKR) *</Label>
+                  <Input type="number" value={editForm.price} onChange={e => setEditForm(f => ({ ...f, price: e.target.value }))} required={!editForm.has_variants} min="0" />
+                </div>
+                <div className="space-y-2">
+                  <Label>Sale Price</Label>
+                  <Input type="number" value={editForm.discounted_price} onChange={e => setEditForm(f => ({ ...f, discounted_price: e.target.value }))} min="0" placeholder="optional" />
+                </div>
               </div>
-              <div className="space-y-2">
-                <Label>Sale Price</Label>
-                <Input type="number" value={editForm.discounted_price} onChange={e => setEditForm(f => ({ ...f, discounted_price: e.target.value }))} min="0" placeholder="optional" />
-              </div>
-            </div>
+            )}
+            {renderVariantEditor('edit', editForm)}
+            {renderInventoryEditor('edit', editForm)}
             <div className="space-y-2">
               <Label>Description</Label>
               <Input value={editForm.description} onChange={e => setEditForm(f => ({ ...f, description: e.target.value }))} />
