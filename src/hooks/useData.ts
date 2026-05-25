@@ -92,8 +92,8 @@ export function useCreateCategory() {
 export function useCreateMenuItem() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (values: { name: string; outlet_id: string; category_id: string; price: number; description?: string; discounted_price?: number; image_url?: string; tags?: string[] }) => {
-      const { data, error } = await supabase.from('menu_items').insert(values).select().single();
+    mutationFn: async (values: { name: string; outlet_id: string; category_id: string; price: number; description?: string; discounted_price?: number; image_url?: string; tags?: string[]; track_inventory?: boolean; unit_type?: 'qty' | 'kg'; has_variants?: boolean }) => {
+      const { data, error } = await supabase.from('menu_items').insert(values as any).select().single();
       if (error) throw error;
       return data;
     },
@@ -104,9 +104,9 @@ export function useCreateMenuItem() {
 export function useUpdateMenuItem() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (params: { id: string; name?: string; description?: string; price?: number; discounted_price?: number | null; image_url?: string; is_available?: boolean; tags?: string[]; category_id?: string }) => {
+    mutationFn: async (params: { id: string; name?: string; description?: string; price?: number; discounted_price?: number | null; image_url?: string; is_available?: boolean; tags?: string[]; category_id?: string; track_inventory?: boolean; unit_type?: 'qty' | 'kg'; has_variants?: boolean }) => {
       const { id, ...updates } = params;
-      const { error } = await supabase.from('menu_items').update(updates).eq('id', id);
+      const { error } = await supabase.from('menu_items').update(updates as any).eq('id', id);
       if (error) throw error;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['menu_items'] }),
@@ -222,7 +222,19 @@ export function usePublicMenu(outletId?: string) {
     queryFn: async () => {
       const { data: categories } = await supabase.from('menu_categories').select('*').eq('outlet_id', outletId!).order('sort_order');
       const { data: items } = await supabase.from('menu_items').select('*').eq('outlet_id', outletId!).eq('is_available', true).order('sort_order');
-      return { categories: categories || [], items: items || [] };
+      const itemIds = (items || []).map((i: any) => i.id);
+      let variants: any[] = [];
+      let inventory: any[] = [];
+      if (itemIds.length > 0) {
+        const sb: any = supabase;
+        const [vRes, iRes] = await Promise.all([
+          sb.from('menu_item_variants').select('*').in('menu_item_id', itemIds).order('sort_order'),
+          sb.from('inventory').select('*').eq('outlet_id', outletId!),
+        ]);
+        variants = vRes.data || [];
+        inventory = iRes.data || [];
+      }
+      return { categories: categories || [], items: items || [], variants, inventory };
     },
     enabled: !!outletId,
   });
