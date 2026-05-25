@@ -137,6 +137,60 @@ export type Database = {
           },
         ]
       }
+      inventory: {
+        Row: {
+          created_at: string
+          critical_threshold: number
+          id: string
+          last_critical_notified_at: string | null
+          last_low_notified_at: string | null
+          low_threshold: number
+          menu_item_id: string
+          outlet_id: string
+          stock: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          critical_threshold?: number
+          id?: string
+          last_critical_notified_at?: string | null
+          last_low_notified_at?: string | null
+          low_threshold?: number
+          menu_item_id: string
+          outlet_id: string
+          stock?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          critical_threshold?: number
+          id?: string
+          last_critical_notified_at?: string | null
+          last_low_notified_at?: string | null
+          low_threshold?: number
+          menu_item_id?: string
+          outlet_id?: string
+          stock?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inventory_menu_item_id_fkey"
+            columns: ["menu_item_id"]
+            isOneToOne: false
+            referencedRelation: "menu_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inventory_outlet_id_fkey"
+            columns: ["outlet_id"]
+            isOneToOne: false
+            referencedRelation: "outlets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       menu_categories: {
         Row: {
           created_at: string
@@ -169,12 +223,54 @@ export type Database = {
           },
         ]
       }
+      menu_item_variants: {
+        Row: {
+          created_at: string
+          id: string
+          label: string
+          menu_item_id: string
+          price: number
+          sort_order: number
+          updated_at: string
+          weight_grams: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          label: string
+          menu_item_id: string
+          price?: number
+          sort_order?: number
+          updated_at?: string
+          weight_grams?: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          label?: string
+          menu_item_id?: string
+          price?: number
+          sort_order?: number
+          updated_at?: string
+          weight_grams?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "menu_item_variants_menu_item_id_fkey"
+            columns: ["menu_item_id"]
+            isOneToOne: false
+            referencedRelation: "menu_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       menu_items: {
         Row: {
           category_id: string
           created_at: string
           description: string | null
           discounted_price: number | null
+          has_variants: boolean
           id: string
           image_url: string | null
           is_available: boolean
@@ -183,6 +279,8 @@ export type Database = {
           price: number
           sort_order: number | null
           tags: string[] | null
+          track_inventory: boolean
+          unit_type: string
           updated_at: string
         }
         Insert: {
@@ -190,6 +288,7 @@ export type Database = {
           created_at?: string
           description?: string | null
           discounted_price?: number | null
+          has_variants?: boolean
           id?: string
           image_url?: string | null
           is_available?: boolean
@@ -198,6 +297,8 @@ export type Database = {
           price: number
           sort_order?: number | null
           tags?: string[] | null
+          track_inventory?: boolean
+          unit_type?: string
           updated_at?: string
         }
         Update: {
@@ -205,6 +306,7 @@ export type Database = {
           created_at?: string
           description?: string | null
           discounted_price?: number | null
+          has_variants?: boolean
           id?: string
           image_url?: string | null
           is_available?: boolean
@@ -213,6 +315,8 @@ export type Database = {
           price?: number
           sort_order?: number | null
           tags?: string[] | null
+          track_inventory?: boolean
+          unit_type?: string
           updated_at?: string
         }
         Relationships: [
@@ -242,6 +346,8 @@ export type Database = {
           price: number
           quantity: number
           special_instructions: string | null
+          variant_id: string | null
+          variant_label: string | null
         }
         Insert: {
           created_at?: string
@@ -252,6 +358,8 @@ export type Database = {
           price: number
           quantity?: number
           special_instructions?: string | null
+          variant_id?: string | null
+          variant_label?: string | null
         }
         Update: {
           created_at?: string
@@ -262,6 +370,8 @@ export type Database = {
           price?: number
           quantity?: number
           special_instructions?: string | null
+          variant_id?: string | null
+          variant_label?: string | null
         }
         Relationships: [
           {
@@ -292,6 +402,7 @@ export type Database = {
           customer_phone: string | null
           delivery_charge: number | null
           id: string
+          inventory_applied: boolean
           location_link: string | null
           order_type: Database["public"]["Enums"]["order_type"]
           outlet_id: string
@@ -323,6 +434,7 @@ export type Database = {
           customer_phone?: string | null
           delivery_charge?: number | null
           id?: string
+          inventory_applied?: boolean
           location_link?: string | null
           order_type?: Database["public"]["Enums"]["order_type"]
           outlet_id: string
@@ -354,6 +466,7 @@ export type Database = {
           customer_phone?: string | null
           delivery_charge?: number | null
           id?: string
+          inventory_applied?: boolean
           location_link?: string | null
           order_type?: Database["public"]["Enums"]["order_type"]
           outlet_id?: string
@@ -1142,6 +1255,8 @@ export type Database = {
         }
         Returns: Json
       }
+      fn_apply_inventory: { Args: { _order_id: string }; Returns: undefined }
+      fn_restore_inventory: { Args: { _order_id: string }; Returns: undefined }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
