@@ -466,16 +466,20 @@ export default function MenuManagement() {
                 <SelectContent>{categories?.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}</SelectContent>
               </Select>
             </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-2">
-                <Label>Price (PKR) *</Label>
-                <Input type="number" value={editForm.price} onChange={e => setEditForm(f => ({ ...f, price: e.target.value }))} required min="0" />
+            {!editForm.has_variants && (
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-2">
+                  <Label>Price (PKR) *</Label>
+                  <Input type="number" value={editForm.price} onChange={e => setEditForm(f => ({ ...f, price: e.target.value }))} required={!editForm.has_variants} min="0" />
+                </div>
+                <div className="space-y-2">
+                  <Label>Sale Price</Label>
+                  <Input type="number" value={editForm.discounted_price} onChange={e => setEditForm(f => ({ ...f, discounted_price: e.target.value }))} min="0" placeholder="optional" />
+                </div>
               </div>
-              <div className="space-y-2">
-                <Label>Sale Price</Label>
-                <Input type="number" value={editForm.discounted_price} onChange={e => setEditForm(f => ({ ...f, discounted_price: e.target.value }))} min="0" placeholder="optional" />
-              </div>
-            </div>
+            )}
+            {renderVariantEditor('edit', editForm)}
+            {renderInventoryEditor('edit', editForm)}
             <div className="space-y-2">
               <Label>Description</Label>
               <Input value={editForm.description} onChange={e => setEditForm(f => ({ ...f, description: e.target.value }))} />
