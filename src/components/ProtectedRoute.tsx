@@ -59,6 +59,12 @@ export function ProtectedRoute({ children, requireAdmin = false, requireOutletOw
     if (access && access.status !== 'verified' && location.pathname !== '/outlet/verify') {
       return <Navigate to="/outlet/verify" replace />;
     }
+
+    // 3) Subscription expiry gate: expired trial/paid plan locks the whole panel.
+    //    The subscribe page stays reachable so the outlet can renew.
+    if (resolvedSub.data && !resolvedSub.data.canAccessApp && location.pathname !== '/outlet/subscribe') {
+      return <SubscriptionExpired />;
+    }
   }
 
   return <>{children}</>;
