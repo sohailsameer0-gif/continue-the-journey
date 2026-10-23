@@ -3,7 +3,8 @@ import { AlertTriangle, CreditCard, LifeBuoy } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import logoImage from '@/assets/menuqr-logo.png';
 import { PLAN_LABEL } from '@/lib/plans';
-import { useOutlet, useResolvedSubscription } from '@/hooks/useSubscription';
+import { useOutlet } from '@/hooks/useData';
+import { useResolvedSubscription } from '@/hooks/useSubscription';
 
 /**
  * Shown when an outlet's subscription (paid plan or free trial) has expired.
