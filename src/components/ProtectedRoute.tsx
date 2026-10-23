@@ -1,9 +1,10 @@
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/lib/auth';
 import { useOutletAccess } from '@/hooks/useOutletAccess';
-import { useOutlet } from '@/hooks/useData';
+import { useOutlet, useResolvedSubscription } from '@/hooks/useSubscription';
 import { Loader2 } from 'lucide-react';
 import OutletSuspended from '@/pages/OutletSuspended';
+import SubscriptionExpired from '@/pages/SubscriptionExpired';
 
 interface Props {
   children: React.ReactNode;

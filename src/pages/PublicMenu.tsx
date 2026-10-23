@@ -61,6 +61,17 @@ export default function PublicMenu() {
     }
   });
 
+  // Server-truth gate: is this outlet allowed to accept new orders right now?
+  // Covers subscription expiry, trial end, suspension and deactivation.
+  const [orderGate, setOrderGate] = useState<{ can_order: boolean; reason: string } | null>(null);
+  useEffect(() => {
+    if (!slug) return;
+    supabase.rpc('get_outlet_order_gate' as any, { _slug: slug }).then(({ data }) => {
+      if (data) setOrderGate(data as { can_order: boolean; reason: string });
+    });
+  }, [slug]);
+  const orderingBlocked = orderGate?.can_order === false && orderGate.reason !== 'not_found';
+
   // Track the address (and name/phone) of the FIRST delivery order so we can
   // decide whether a follow-up delivery from the same customer should be
   // charged again. Same address = no extra delivery charge. Changed address =
