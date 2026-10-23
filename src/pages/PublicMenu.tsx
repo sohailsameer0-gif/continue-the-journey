@@ -334,7 +334,16 @@ export default function PublicMenu() {
         </div>
       )}
 
+      {orderingBlocked && (
+        <div className="mx-4 mt-4 p-4 rounded-2xl bg-destructive/10 border border-destructive/20 text-center">
+          <p className="text-2xl mb-1">🚫</p>
+          <p className="text-sm font-semibold text-destructive">Online ordering is temporarily unavailable</p>
+          <p className="text-xs text-muted-foreground mt-1">This restaurant cannot accept new orders right now. Please contact the restaurant directly.</p>
+        </div>
+      )}
+
       {/* Order Type Selection */}
+      {!orderingBlocked && (
       <div className="mx-4 mt-4">
         {tableId ? (
           <div className="px-4 py-2.5 rounded-2xl bg-primary/8 border border-primary/15 flex items-center justify-center gap-2">
