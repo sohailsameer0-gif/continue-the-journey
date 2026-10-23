@@ -391,6 +391,7 @@ export default function PublicMenu() {
           </div>
         )}
       </div>
+      )}
 
       {/* Sticky Search + Categories */}
       <div className="sticky top-0 z-10 bg-background/95 backdrop-blur-md mt-3 border-b">
