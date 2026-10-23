@@ -17,6 +17,7 @@ export function ProtectedRoute({ children, requireAdmin = false, requireOutletOw
   const location = useLocation();
   const { data: access, isLoading: accessLoading } = useOutletAccess();
   const { data: outlet, isLoading: outletLoading } = useOutlet();
+  const resolvedSub = useResolvedSubscription(outlet?.id);
 
   if (loading) {
     return (
