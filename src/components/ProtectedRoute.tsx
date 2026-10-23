@@ -2,8 +2,10 @@ import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/lib/auth';
 import { useOutletAccess } from '@/hooks/useOutletAccess';
 import { useOutlet } from '@/hooks/useData';
+import { useResolvedSubscription } from '@/hooks/useSubscription';
 import { Loader2 } from 'lucide-react';
 import OutletSuspended from '@/pages/OutletSuspended';
+import SubscriptionExpired from '@/pages/SubscriptionExpired';
 
 interface Props {
   children: React.ReactNode;
@@ -16,6 +18,7 @@ export function ProtectedRoute({ children, requireAdmin = false, requireOutletOw
   const location = useLocation();
   const { data: access, isLoading: accessLoading } = useOutletAccess();
   const { data: outlet, isLoading: outletLoading } = useOutlet();
+  const resolvedSub = useResolvedSubscription(outlet?.id);
 
   if (loading) {
     return (
@@ -56,6 +59,12 @@ export function ProtectedRoute({ children, requireAdmin = false, requireOutletOw
     // 2) OTP / verification gate: every outlet route requires verified status.
     if (access && access.status !== 'verified' && location.pathname !== '/outlet/verify') {
       return <Navigate to="/outlet/verify" replace />;
+    }
+
+    // 3) Subscription expiry gate: expired trial/paid plan locks the whole panel.
+    //    The subscribe page stays reachable so the outlet can renew.
+    if (resolvedSub.data && !resolvedSub.data.canAccessApp && location.pathname !== '/outlet/subscribe') {
+      return <SubscriptionExpired />;
     }
   }
 

@@ -61,6 +61,17 @@ export default function PublicMenu() {
     }
   });
 
+  // Server-truth gate: is this outlet allowed to accept new orders right now?
+  // Covers subscription expiry, trial end, suspension and deactivation.
+  const [orderGate, setOrderGate] = useState<{ can_order: boolean; reason: string } | null>(null);
+  useEffect(() => {
+    if (!slug) return;
+    supabase.rpc('get_outlet_order_gate' as any, { _slug: slug }).then(({ data }) => {
+      if (data) setOrderGate(data as { can_order: boolean; reason: string });
+    });
+  }, [slug]);
+  const orderingBlocked = orderGate?.can_order === false && orderGate.reason !== 'not_found';
+
   // Track the address (and name/phone) of the FIRST delivery order so we can
   // decide whether a follow-up delivery from the same customer should be
   // charged again. Same address = no extra delivery charge. Changed address =
@@ -137,6 +148,10 @@ export default function PublicMenu() {
   }, [menu]);
 
   const addToCart = (item: { id: string; name: string; price: number; discounted_price?: number | null; image_url?: string | null }) => {
+    if (orderingBlocked) {
+      toast.error('Online ordering is temporarily unavailable for this restaurant.');
+      return;
+    }
     const price = item.discounted_price || item.price;
     setCart(c => {
       const existing = c.find(i => i.id === item.id);
@@ -177,6 +192,10 @@ export default function PublicMenu() {
 
   const placeOrder = async () => {
     if (cart.length === 0) return;
+    if (orderingBlocked) {
+      toast.error('Online ordering is temporarily unavailable for this restaurant.');
+      return;
+    }
     setPlacing(true);
     try {
       const { data: order, error } = await supabase.from('orders').insert({
@@ -315,7 +334,16 @@ export default function PublicMenu() {
         </div>
       )}
 
+      {orderingBlocked && (
+        <div className="mx-4 mt-4 p-4 rounded-2xl bg-destructive/10 border border-destructive/20 text-center">
+          <p className="text-2xl mb-1">🚫</p>
+          <p className="text-sm font-semibold text-destructive">Online ordering is temporarily unavailable</p>
+          <p className="text-xs text-muted-foreground mt-1">This restaurant cannot accept new orders right now. Please contact the restaurant directly.</p>
+        </div>
+      )}
+
       {/* Order Type Selection */}
+      {!orderingBlocked && (
       <div className="mx-4 mt-4">
         {tableId ? (
           <div className="px-4 py-2.5 rounded-2xl bg-primary/8 border border-primary/15 flex items-center justify-center gap-2">
@@ -363,6 +391,7 @@ export default function PublicMenu() {
           </div>
         )}
       </div>
+      )}
 
       {/* Sticky Search + Categories */}
       <div className="sticky top-0 z-10 bg-background/95 backdrop-blur-md mt-3 border-b">
