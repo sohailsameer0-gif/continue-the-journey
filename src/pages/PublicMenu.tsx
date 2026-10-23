@@ -148,6 +148,10 @@ export default function PublicMenu() {
   }, [menu]);
 
   const addToCart = (item: { id: string; name: string; price: number; discounted_price?: number | null; image_url?: string | null }) => {
+    if (orderingBlocked) {
+      toast.error('Online ordering is temporarily unavailable for this restaurant.');
+      return;
+    }
     const price = item.discounted_price || item.price;
     setCart(c => {
       const existing = c.find(i => i.id === item.id);
@@ -188,6 +192,10 @@ export default function PublicMenu() {
 
   const placeOrder = async () => {
     if (cart.length === 0) return;
+    if (orderingBlocked) {
+      toast.error('Online ordering is temporarily unavailable for this restaurant.');
+      return;
+    }
     setPlacing(true);
     try {
       const { data: order, error } = await supabase.from('orders').insert({
