@@ -1257,6 +1257,7 @@ export type Database = {
       }
       fn_apply_inventory: { Args: { _order_id: string }; Returns: undefined }
       fn_restore_inventory: { Args: { _order_id: string }; Returns: undefined }
+      get_outlet_order_gate: { Args: { _slug: string }; Returns: Json }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
