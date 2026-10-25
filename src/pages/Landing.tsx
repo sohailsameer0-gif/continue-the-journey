@@ -152,7 +152,7 @@ export default function Landing() {
       {/* Footer */}
       <footer className="border-t py-8">
         <div className="container text-center text-sm text-muted-foreground">
-          <p>© {new Date().getFullYear()} MenuQR — QR Menu & Ordering Platform for Pakistan</p>
+          <p>© {new Date().getFullYear()} MenuQR — Prepared by Sohail's Digital Solutions</p>
         </div>
       </footer>
     </div>
