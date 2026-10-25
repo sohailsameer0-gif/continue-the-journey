@@ -75,9 +75,12 @@ export function useResolvedSubscription(outletId?: string) {
   const demoEnd = sub.demo_end_date ? new Date(sub.demo_end_date).getTime() : null;
   const paidUntil = (sub as any).paid_until ? new Date((sub as any).paid_until).getTime() : null;
   const isDemo = sub.plan === 'free_demo';
-  const isPaid = sub.status === 'paid_active';
+  // A paid plan lapses when paid_until passes even if the status column still
+  // says 'paid_active'. Expired paid plans must be treated as expired.
+  const isPaidLapsed = sub.status === 'paid_active' && paidUntil !== null && now > paidUntil;
+  const isPaid = sub.status === 'paid_active' && !isPaidLapsed;
   const isSuspended = sub.status === 'suspended';
-  const isPaidExpired = !isPaid && !isDemo && sub.status === 'expired';
+  const isPaidExpired = !isPaid && !isDemo && (sub.status === 'expired' || isPaidLapsed);
   const isDemoExpired = isDemo && demoEnd !== null && now > demoEnd;
   const isExpired = isDemoExpired || isPaidExpired;
   const referenceEnd = isPaid ? paidUntil : demoEnd;
