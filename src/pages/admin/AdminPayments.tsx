@@ -12,6 +12,7 @@ import { CheckCircle2, XCircle, Eye, Loader2, Crown, Receipt } from 'lucide-reac
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { supabase } from '@/integrations/supabase/client';
+import { resolveProofUrl } from '@/lib/proofUrl';
 import { PLAN_LABEL, type PlanKey } from '@/lib/plans';
 
 export default function AdminPayments() {
@@ -57,9 +58,10 @@ export default function AdminPayments() {
   };
 
   const openProof = async (path: string) => {
-    if (path.startsWith('http')) { setProofUrl(path); return; }
-    const { data } = await supabase.storage.from('payment-proofs').createSignedUrl(path, 60 * 5);
-    if (data?.signedUrl) setProofUrl(data.signedUrl);
+    // Handles both bare object paths and legacy full URLs (proofs bucket is private)
+    const url = await resolveProofUrl(path);
+    if (url && url !== path) setProofUrl(url);
+    else if (/^https?:\/\//i.test(path)) setProofUrl(path);
     else toast.error('Could not open proof');
   };
 
