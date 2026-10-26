@@ -8,13 +8,13 @@ import {
   type PlatformSettingsLike,
 } from '@/lib/plans';
 
-// Public read of platform settings (table has public SELECT policy)
+// Public read of platform settings (narrow public view; the base table is admin-only)
 export function usePublicPlatformSettings() {
   return useQuery({
     queryKey: ['public_platform_settings'],
     queryFn: async (): Promise<PlatformSettingsLike> => {
       const { data, error } = await supabase
-        .from('platform_settings')
+        .from('app_public_settings')
         .select('*')
         .limit(1)
         .maybeSingle();
