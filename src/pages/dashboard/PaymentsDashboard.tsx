@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { CreditCard, CheckCircle, XCircle, Clock, Image, User, Eye, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { formatDistanceToNow } from 'date-fns';
+import { resolveProofUrl } from '@/lib/proofUrl';
 
 interface PaymentWithProof {
   id: string;
@@ -222,7 +223,7 @@ export default function PaymentsDashboard() {
                   {payment.proofs.map(proof => (
                     <button
                       key={proof.id}
-                      onClick={() => setPreviewImage(proof.image_url)}
+                      onClick={async () => setPreviewImage(await resolveProofUrl(proof.image_url))}
                       className="flex items-center gap-1.5 text-xs text-primary bg-primary/5 border border-primary/20 rounded-lg px-3 py-2 hover:bg-primary/10 transition-colors"
                     >
                       <Eye className="h-3.5 w-3.5" /> View Payment Proof
