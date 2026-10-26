@@ -1221,7 +1221,81 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      app_public_settings: {
+        Row: {
+          basic_enable_delivery: boolean | null
+          basic_enable_reports: boolean | null
+          basic_max_menu_items: number | null
+          basic_max_tables: number | null
+          basic_plan_price: number | null
+          demo_duration_days: number | null
+          demo_max_menu_items: number | null
+          demo_max_tables: number | null
+          enable_demo_signup: boolean | null
+          premium_enable_branding: boolean | null
+          premium_enable_delivery: boolean | null
+          premium_enable_reports: boolean | null
+          premium_max_menu_items: number | null
+          premium_max_tables: number | null
+          pro_plan_price: number | null
+          standard_enable_delivery: boolean | null
+          standard_enable_reports: boolean | null
+          standard_max_menu_items: number | null
+          standard_max_tables: number | null
+          standard_plan_price: number | null
+          support_email: string | null
+          support_whatsapp: string | null
+        }
+        Insert: {
+          basic_enable_delivery?: boolean | null
+          basic_enable_reports?: boolean | null
+          basic_max_menu_items?: number | null
+          basic_max_tables?: number | null
+          basic_plan_price?: number | null
+          demo_duration_days?: number | null
+          demo_max_menu_items?: number | null
+          demo_max_tables?: number | null
+          enable_demo_signup?: boolean | null
+          premium_enable_branding?: boolean | null
+          premium_enable_delivery?: boolean | null
+          premium_enable_reports?: boolean | null
+          premium_max_menu_items?: number | null
+          premium_max_tables?: number | null
+          pro_plan_price?: number | null
+          standard_enable_delivery?: boolean | null
+          standard_enable_reports?: boolean | null
+          standard_max_menu_items?: number | null
+          standard_max_tables?: number | null
+          standard_plan_price?: number | null
+          support_email?: string | null
+          support_whatsapp?: string | null
+        }
+        Update: {
+          basic_enable_delivery?: boolean | null
+          basic_enable_reports?: boolean | null
+          basic_max_menu_items?: number | null
+          basic_max_tables?: number | null
+          basic_plan_price?: number | null
+          demo_duration_days?: number | null
+          demo_max_menu_items?: number | null
+          demo_max_tables?: number | null
+          enable_demo_signup?: boolean | null
+          premium_enable_branding?: boolean | null
+          premium_enable_delivery?: boolean | null
+          premium_enable_reports?: boolean | null
+          premium_max_menu_items?: number | null
+          premium_max_tables?: number | null
+          pro_plan_price?: number | null
+          standard_enable_delivery?: boolean | null
+          standard_enable_reports?: boolean | null
+          standard_max_menu_items?: number | null
+          standard_max_tables?: number | null
+          standard_plan_price?: number | null
+          support_email?: string | null
+          support_whatsapp?: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       _gen_otp_code: { Args: never; Returns: string }
