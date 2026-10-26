@@ -8,6 +8,13 @@
       "when": 1792770021560,
       "tag": "0000_gate_orders_on_subscription",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1793037645667,
+      "tag": "0001_tighten_public_read_and_storage_owner_policies",
+      "breakpoints": true
     }
   ]
 }
