@@ -2,6 +2,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { CreditCard, Image, CheckCircle, XCircle, Clock } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
+import { resolveProofUrl } from '@/lib/proofUrl';
 
 interface PaymentProof {
   id: string;
@@ -86,6 +87,15 @@ export default function OrderPaymentVerification({
                 href={latestProof.image_url}
                 target="_blank"
                 rel="noopener noreferrer"
+                onClick={async (e) => {
+                  // The proofs bucket is private: open a tab first, then point
+                  // it at a short-lived signed URL for the proof image.
+                  e.preventDefault();
+                  const win = window.open('about:blank', '_blank', 'noopener,noreferrer');
+                  const url = await resolveProofUrl(latestProof.image_url);
+                  if (win) win.location.href = url;
+                  else window.open(url, '_blank', 'noopener,noreferrer');
+                }}
                 className="inline-flex items-center gap-1 text-xs font-medium text-primary underline-offset-4 hover:underline"
               >
                 <Image className="h-3.5 w-3.5" /> View Payment Proof
