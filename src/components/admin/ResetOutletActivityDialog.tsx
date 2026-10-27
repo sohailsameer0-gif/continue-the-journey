@@ -173,6 +173,53 @@ export default function ResetOutletActivityDialog({ outletId, outletName, trigge
               {trimmedLen}/3 characters minimum
             </p>
           </div>
+
+          <div className="space-y-1.5 pt-2">
+            <Label htmlFor="reset-evidence">증빙 자료 첨부 (선택)</Label>
+            <input
+              ref={fileInputRef}
+              id="reset-evidence"
+              type="file"
+              accept="image/png,image/jpeg,image/webp,image/gif,image/heic,image/heif"
+              className="hidden"
+              onChange={e => pickEvidence(e.target.files?.[0])}
+            />
+            {evidencePreview ? (
+              <div className="flex items-center gap-3 rounded-md border p-2">
+                <img
+                  src={evidencePreview}
+                  alt="증빙 자료 미리보기"
+                  className="h-12 w-12 rounded object-cover"
+                />
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm text-foreground">{evidence?.name}</p>
+                  <p className="text-xs text-muted-foreground">
+                    초기화 기록과 함께 저장됩니다
+                  </p>
+                </div>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="h-7 w-7 shrink-0"
+                  onClick={clearEvidence}
+                  aria-label="첨부한 증빙 자료 삭제"
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+            ) : (
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full"
+                onClick={() => fileInputRef.current?.click()}
+              >
+                <Paperclip className="h-4 w-4 mr-2" />
+                이미지 업로드 (스크린샷·캡처 등)
+              </Button>
+            )}
+          </div>
         </div>
 
         <DialogFooter className="gap-2">
