@@ -30,10 +30,42 @@ export default function ResetOutletActivityDialog({ outletId, outletName, trigge
   const [selected, setSelected] = useState<Record<string, boolean>>({});
   const [reason, setReason] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [evidence, setEvidence] = useState<File | null>(null);
+  const [evidencePreview, setEvidencePreview] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const reset = () => { setSelected({}); setReason(''); };
+  const reset = () => {
+    setSelected({});
+    setReason('');
+    setEvidence(null);
+    if (evidencePreview) URL.revokeObjectURL(evidencePreview);
+    setEvidencePreview(null);
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
 
   const toggle = (id: string) => setSelected(s => ({ ...s, [id]: !s[id] }));
+
+  const pickEvidence = (file: File | undefined) => {
+    if (!file) return;
+    if (!/^image\/(png|jpe?g|webp|gif|heic|heif)$/i.test(file.type)) {
+      toast.error('이미지 파일(png/jpg/webp)만 첨부할 수 있습니다');
+      return;
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error('파일 크기는 10MB 이하로 첨부해 주세요');
+      return;
+    }
+    if (evidencePreview) URL.revokeObjectURL(evidencePreview);
+    setEvidence(file);
+    setEvidencePreview(URL.createObjectURL(file));
+  };
+
+  const clearEvidence = () => {
+    setEvidence(null);
+    if (evidencePreview) URL.revokeObjectURL(evidencePreview);
+    setEvidencePreview(null);
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
 
   const trimmedReason = reason.trim();
   const selectedTypes = Object.entries(selected).filter(([, v]) => v).map(([k]) => k);
