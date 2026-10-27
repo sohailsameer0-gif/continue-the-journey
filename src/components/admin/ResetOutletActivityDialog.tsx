@@ -83,10 +83,21 @@ export default function ResetOutletActivityDialog({ outletId, outletName, trigge
     const types = selectedTypes;
     setSubmitting(true);
     try {
+      let evidenceUrl: string | null = null;
+      if (evidence) {
+        const safeName = evidence.name.replace(/[^\w.\-가-힣]+/g, '_');
+        const path = `reset-evidence/${outletId}/${Date.now()}-${safeName}`;
+        const { error: upErr } = await supabase.storage
+          .from('reset-evidence')
+          .upload(path.replace(/^reset-evidence\//, ''), evidence, { upsert: false, contentType: evidence.type });
+        if (upErr) throw new Error(`증빙 자료 업로드 실패: ${upErr.message}`);
+        evidenceUrl = path;
+      }
       const { data, error } = await (supabase as any).rpc('admin_reset_outlet_activity', {
         _outlet_id: outletId,
         _types: types,
         _reason: trimmedReason,
+        _evidence_url: evidenceUrl,
       });
       if (error) {
         // Surface the real Postgres error so admin sees the root cause
