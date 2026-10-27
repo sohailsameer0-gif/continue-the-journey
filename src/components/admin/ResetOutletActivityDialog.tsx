@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
@@ -8,7 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import {
   Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger,
 } from '@/components/ui/dialog';
-import { Loader2, Eraser, AlertTriangle } from 'lucide-react';
+import { Loader2, Eraser, AlertTriangle, Paperclip, X } from 'lucide-react';
 import { toast } from 'sonner';
 
 const TYPES: { id: string; label: string; description: string }[] = [
@@ -30,10 +30,42 @@ export default function ResetOutletActivityDialog({ outletId, outletName, trigge
   const [selected, setSelected] = useState<Record<string, boolean>>({});
   const [reason, setReason] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [evidence, setEvidence] = useState<File | null>(null);
+  const [evidencePreview, setEvidencePreview] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const reset = () => { setSelected({}); setReason(''); };
+  const reset = () => {
+    setSelected({});
+    setReason('');
+    setEvidence(null);
+    if (evidencePreview) URL.revokeObjectURL(evidencePreview);
+    setEvidencePreview(null);
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
 
   const toggle = (id: string) => setSelected(s => ({ ...s, [id]: !s[id] }));
+
+  const pickEvidence = (file: File | undefined) => {
+    if (!file) return;
+    if (!/^image\/(png|jpe?g|webp|gif|heic|heif)$/i.test(file.type)) {
+      toast.error('이미지 파일(png/jpg/webp)만 첨부할 수 있습니다');
+      return;
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error('파일 크기는 10MB 이하로 첨부해 주세요');
+      return;
+    }
+    if (evidencePreview) URL.revokeObjectURL(evidencePreview);
+    setEvidence(file);
+    setEvidencePreview(URL.createObjectURL(file));
+  };
+
+  const clearEvidence = () => {
+    setEvidence(null);
+    if (evidencePreview) URL.revokeObjectURL(evidencePreview);
+    setEvidencePreview(null);
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
 
   const trimmedReason = reason.trim();
   const selectedTypes = Object.entries(selected).filter(([, v]) => v).map(([k]) => k);
@@ -51,10 +83,21 @@ export default function ResetOutletActivityDialog({ outletId, outletName, trigge
     const types = selectedTypes;
     setSubmitting(true);
     try {
+      let evidenceUrl: string | null = null;
+      if (evidence) {
+        const safeName = evidence.name.replace(/[^\w.\-가-힣]+/g, '_');
+        const path = `reset-evidence/${outletId}/${Date.now()}-${safeName}`;
+        const { error: upErr } = await supabase.storage
+          .from('reset-evidence')
+          .upload(path.replace(/^reset-evidence\//, ''), evidence, { upsert: false, contentType: evidence.type });
+        if (upErr) throw new Error(`증빙 자료 업로드 실패: ${upErr.message}`);
+        evidenceUrl = path;
+      }
       const { data, error } = await (supabase as any).rpc('admin_reset_outlet_activity', {
         _outlet_id: outletId,
         _types: types,
         _reason: trimmedReason,
+        _evidence_url: evidenceUrl,
       });
       if (error) {
         // Surface the real Postgres error so admin sees the root cause
@@ -129,6 +172,53 @@ export default function ResetOutletActivityDialog({ outletId, outletName, trigge
             <p className={`text-xs ${trimmedLen >= 3 ? 'text-muted-foreground' : 'text-destructive'}`}>
               {trimmedLen}/3 characters minimum
             </p>
+          </div>
+
+          <div className="space-y-1.5 pt-2">
+            <Label htmlFor="reset-evidence">증빙 자료 첨부 (선택)</Label>
+            <input
+              ref={fileInputRef}
+              id="reset-evidence"
+              type="file"
+              accept="image/png,image/jpeg,image/webp,image/gif,image/heic,image/heif"
+              className="hidden"
+              onChange={e => pickEvidence(e.target.files?.[0])}
+            />
+            {evidencePreview ? (
+              <div className="flex items-center gap-3 rounded-md border p-2">
+                <img
+                  src={evidencePreview}
+                  alt="증빙 자료 미리보기"
+                  className="h-12 w-12 rounded object-cover"
+                />
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm text-foreground">{evidence?.name}</p>
+                  <p className="text-xs text-muted-foreground">
+                    초기화 기록과 함께 저장됩니다
+                  </p>
+                </div>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="h-7 w-7 shrink-0"
+                  onClick={clearEvidence}
+                  aria-label="첨부한 증빙 자료 삭제"
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+            ) : (
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full"
+                onClick={() => fileInputRef.current?.click()}
+              >
+                <Paperclip className="h-4 w-4 mr-2" />
+                이미지 업로드 (스크린샷·캡처 등)
+              </Button>
+            )}
           </div>
         </div>
 

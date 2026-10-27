@@ -29,6 +29,13 @@
       "when": 1793040762155,
       "tag": "0003_platform_settings_public_view",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1793079728046,
+      "tag": "0004_activity_reset_evidence",
+      "breakpoints": true
     }
   ]
 }
