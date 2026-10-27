@@ -8,7 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import {
   Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger,
 } from '@/components/ui/dialog';
-import { Loader2, Eraser, AlertTriangle } from 'lucide-react';
+import { Loader2, Eraser, AlertTriangle, Paperclip, X } from 'lucide-react';
 import { toast } from 'sonner';
 
 const TYPES: { id: string; label: string; description: string }[] = [
