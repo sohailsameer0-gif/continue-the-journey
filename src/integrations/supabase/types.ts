@@ -588,6 +588,7 @@ export type Database = {
           cleared_types: string[]
           counts: Json
           created_at: string
+          evidence_url: string | null
           id: string
           outlet_id: string
           reason: string
@@ -598,6 +599,7 @@ export type Database = {
           cleared_types?: string[]
           counts?: Json
           created_at?: string
+          evidence_url?: string | null
           id?: string
           outlet_id: string
           reason: string
@@ -608,6 +610,7 @@ export type Database = {
           cleared_types?: string[]
           counts?: Json
           created_at?: string
+          evidence_url?: string | null
           id?: string
           outlet_id?: string
           reason?: string
@@ -1317,7 +1320,12 @@ export type Database = {
         Returns: Json
       }
       admin_reset_outlet_activity: {
-        Args: { _outlet_id: string; _reason: string; _types: string[] }
+        Args: {
+          _evidence_url?: string
+          _outlet_id: string
+          _reason: string
+          _types: string[]
+        }
         Returns: Json
       }
       customer_cancel_orders: {
