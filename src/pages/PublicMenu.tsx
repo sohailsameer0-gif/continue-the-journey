@@ -8,6 +8,7 @@ import MenuHeader from '@/components/public-menu/MenuHeader';
 import MenuItemCard from '@/components/public-menu/MenuItemCard';
 import CartSheet, { type CartItem } from '@/components/public-menu/CartSheet';
 import OrderTracking from '@/components/public-menu/OrderTracking';
+import WelcomeLocationPopup from '@/components/public-menu/WelcomeLocationPopup';
 import { isCustomerTrackableStatus } from '@/lib/orderStatusConstants';
 
 export default function PublicMenu() {
