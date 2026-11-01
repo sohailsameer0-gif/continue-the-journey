@@ -8,6 +8,7 @@ import MenuHeader from '@/components/public-menu/MenuHeader';
 import MenuItemCard from '@/components/public-menu/MenuItemCard';
 import CartSheet, { type CartItem } from '@/components/public-menu/CartSheet';
 import OrderTracking from '@/components/public-menu/OrderTracking';
+import WelcomeLocationPopup from '@/components/public-menu/WelcomeLocationPopup';
 import { isCustomerTrackableStatus } from '@/lib/orderStatusConstants';
 
 export default function PublicMenu() {
@@ -41,6 +42,12 @@ export default function PublicMenu() {
     } catch { return []; }
   });
   const [showTracking, setShowTracking] = useState(false);
+
+  // Welcome popup: shown once per visit (browser session). Collects the order
+  // type plus city/area and GPS location before the customer starts ordering,
+  // and those details are carried into the order automatically.
+  const welcomeKey = `welcome-shown-${slug || ''}${tableId ? `-${tableId}` : ''}`;
+  const [showWelcome, setShowWelcome] = useState(false);
 
   // Per-visit session id. Each new browser/visitor on the same QR gets their
   // own session, so two different customers at the same table do NOT merge
@@ -96,6 +103,31 @@ export default function PublicMenu() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Open the welcome popup on first visit (skipped for dine-in/table links,
+  // blocked ordering, and while the customer is in order tracking view).
+  useEffect(() => {
+    if (!outlet || tableId || orderingBlocked || showTracking) return;
+    let seen = false;
+    try { seen = !!sessionStorage.getItem(welcomeKey); } catch { /* ignore */ }
+    if (!seen) setShowWelcome(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [outlet, tableId, orderingBlocked, showTracking]);
+
+  const applyWelcome = (selection: {
+    orderType: 'delivery' | 'takeaway'; city: string; area: string; address: string; locationLink: string;
+  }) => {
+    try { sessionStorage.setItem(welcomeKey, '1'); } catch { /* ignore */ }
+    setSelectedOrderType(selection.orderType);
+    if (selection.address) setCustomerAddress(selection.address);
+    if (selection.locationLink) setLocationLink(selection.locationLink);
+    setShowWelcome(false);
+  };
+
+  const closeWelcome = () => {
+    try { sessionStorage.setItem(welcomeKey, '1'); } catch { /* ignore */ }
+    setShowWelcome(false);
+  };
 
   useEffect(() => {
     if (orderIds.length > 0) {
@@ -482,6 +514,18 @@ export default function PublicMenu() {
             </button>
           </div>
         </div>
+      )}
+
+      {/* Welcome / location popup (first visit) */}
+      {showWelcome && outlet && (
+        <WelcomeLocationPopup
+          outlet={{ name: outlet.name, logo_url: outlet.logo_url }}
+          deliveryEnabled={deliveryEnabled}
+          takeawayEnabled={takeawayEnabled}
+          previous={prevDelivery ? { address: prevDelivery.address, locationLink: prevDelivery.locationLink } : null}
+          onSelect={applyWelcome}
+          onClose={closeWelcome}
+        />
       )}
 
       {/* Cart Sheet */}
