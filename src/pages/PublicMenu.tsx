@@ -43,6 +43,12 @@ export default function PublicMenu() {
   });
   const [showTracking, setShowTracking] = useState(false);
 
+  // Welcome popup: shown once per visit (browser session). Collects the order
+  // type plus city/area and GPS location before the customer starts ordering,
+  // and those details are carried into the order automatically.
+  const welcomeKey = `welcome-shown-${slug || ''}${tableId ? `-${tableId}` : ''}`;
+  const [showWelcome, setShowWelcome] = useState(false);
+
   // Per-visit session id. Each new browser/visitor on the same QR gets their
   // own session, so two different customers at the same table do NOT merge
   // into one combined bill. Cleared together with order ids when the bill
