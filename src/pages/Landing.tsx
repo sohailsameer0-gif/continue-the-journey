@@ -35,33 +35,37 @@ export default function Landing() {
   }, [user, isAdmin, isOutletOwner, loading, navigate]);
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen overflow-x-hidden bg-background">
       {/* Header */}
       <header className="sticky top-0 z-50 border-b bg-background/95 backdrop-blur">
-        <div className="container flex h-16 items-center justify-between">
-          <div className="flex items-center gap-2">
+        <div className="container flex h-16 items-center justify-between gap-2 px-3 sm:px-8">
+          <div className="flex min-w-0 items-center gap-2">
             <img
               src={logoImage}
               alt="MenuQR logo"
               width={36}
               height={36}
-              className="h-9 w-9 rounded-lg object-contain"
+              className="h-8 w-8 shrink-0 rounded-lg object-contain sm:h-9 sm:w-9"
               decoding="async"
             />
-            <span className="font-heading text-xl font-bold text-foreground">MenuQR</span>
+            <span className="truncate font-heading text-lg font-bold text-foreground sm:text-xl">MenuQR</span>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex shrink-0 items-center gap-1 sm:gap-2">
             <Button
               variant="ghost"
               size="icon"
+              className="h-9 w-9"
               onClick={() => setTheme(isDark ? 'light' : 'dark')}
               aria-label="Toggle theme"
               title={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
             >
               {isDark ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
             </Button>
-            <Button variant="ghost" onClick={() => navigate('/auth')}>Sign In</Button>
-            <Button variant="hero" onClick={() => navigate('/auth')}>Start Free Demo</Button>
+            <Button variant="ghost" size="sm" className="px-2 sm:px-4" onClick={() => navigate('/auth')}>Sign In</Button>
+            <Button variant="hero" size="sm" className="px-3 sm:px-4" onClick={() => navigate('/auth')}>
+              <span className="sm:hidden">Free Demo</span>
+              <span className="hidden sm:inline">Start Free Demo</span>
+            </Button>
           </div>
         </div>
       </header>
@@ -75,13 +79,13 @@ export default function Landing() {
               <Smartphone className="h-4 w-4" />
               Made for Pakistan
             </div>
-            <h1 className="font-heading text-4xl font-extrabold tracking-tight text-foreground md:text-5xl lg:text-6xl text-balance">
+            <h1 className="font-heading text-3xl sm:text-4xl font-extrabold tracking-tight text-foreground md:text-5xl lg:text-6xl text-balance">
               QR Menu & Ordering for Your Restaurant
             </h1>
             <p className="max-w-lg text-lg text-muted-foreground">
               Let your customers scan, browse your menu, order from their table, and request the bill — all from their phone. No app download needed.
             </p>
-            <div className="flex flex-wrap gap-3">
+            <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
               <Button variant="hero" size="lg" className="text-base px-8" onClick={() => navigate('/auth')}>
                 Start Free Demo <ChevronRight className="ml-1 h-5 w-5" />
               </Button>
