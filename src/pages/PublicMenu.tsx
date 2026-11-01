@@ -516,6 +516,18 @@ export default function PublicMenu() {
         </div>
       )}
 
+      {/* Welcome / location popup (first visit) */}
+      {showWelcome && outlet && (
+        <WelcomeLocationPopup
+          outlet={{ name: outlet.name, logo_url: outlet.logo_url }}
+          deliveryEnabled={deliveryEnabled}
+          takeawayEnabled={takeawayEnabled}
+          previous={prevDelivery ? { address: prevDelivery.address, locationLink: prevDelivery.locationLink } : null}
+          onSelect={applyWelcome}
+          onClose={closeWelcome}
+        />
+      )}
+
       {/* Cart Sheet */}
       {showCart && (
         <CartSheet
