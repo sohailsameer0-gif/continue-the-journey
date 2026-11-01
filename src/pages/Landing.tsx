@@ -79,13 +79,13 @@ export default function Landing() {
               <Smartphone className="h-4 w-4" />
               Made for Pakistan
             </div>
-            <h1 className="font-heading text-4xl font-extrabold tracking-tight text-foreground md:text-5xl lg:text-6xl text-balance">
+            <h1 className="font-heading text-3xl sm:text-4xl font-extrabold tracking-tight text-foreground md:text-5xl lg:text-6xl text-balance">
               QR Menu & Ordering for Your Restaurant
             </h1>
             <p className="max-w-lg text-lg text-muted-foreground">
               Let your customers scan, browse your menu, order from their table, and request the bill — all from their phone. No app download needed.
             </p>
-            <div className="flex flex-wrap gap-3">
+            <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
               <Button variant="hero" size="lg" className="text-base px-8" onClick={() => navigate('/auth')}>
                 Start Free Demo <ChevronRight className="ml-1 h-5 w-5" />
               </Button>
