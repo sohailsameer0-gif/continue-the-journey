@@ -104,6 +104,31 @@ export default function PublicMenu() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Open the welcome popup on first visit (skipped for dine-in/table links,
+  // blocked ordering, and while the customer is in order tracking view).
+  useEffect(() => {
+    if (!outlet || tableId || orderingBlocked || showTracking) return;
+    let seen = false;
+    try { seen = !!sessionStorage.getItem(welcomeKey); } catch { /* ignore */ }
+    if (!seen) setShowWelcome(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [outlet, tableId, orderingBlocked, showTracking]);
+
+  const applyWelcome = (selection: {
+    orderType: 'delivery' | 'takeaway'; city: string; area: string; address: string; locationLink: string;
+  }) => {
+    try { sessionStorage.setItem(welcomeKey, '1'); } catch { /* ignore */ }
+    setSelectedOrderType(selection.orderType);
+    if (selection.address) setCustomerAddress(selection.address);
+    if (selection.locationLink) setLocationLink(selection.locationLink);
+    setShowWelcome(false);
+  };
+
+  const closeWelcome = () => {
+    try { sessionStorage.setItem(welcomeKey, '1'); } catch { /* ignore */ }
+    setShowWelcome(false);
+  };
+
   useEffect(() => {
     if (orderIds.length > 0) {
       sessionStorage.setItem(storageKey, JSON.stringify(orderIds));
