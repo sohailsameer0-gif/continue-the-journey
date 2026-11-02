@@ -205,13 +205,15 @@ export default function PublicMenu() {
   //  - Additional orders to the SAME address (same name/phone same trip) → no extra fee.
   //  - If the customer changes the delivery address for a follow-up order → charge applies again.
   const normalizeAddr = (s?: string) => (s || '').trim().toLowerCase().replace(/\s+/g, ' ');
-  const sameAddressAsPrevious = !!(
+  // Same trip detection: matching text address OR the same shared Google Maps
+  // location link both count as "same address" so the fee is not charged again.
+  const sameLocationAsPrevious = !!(
     prevDelivery &&
-    prevDelivery.address &&
-    normalizeAddr(prevDelivery.address) === normalizeAddr(customerAddress)
+    ((prevDelivery.address && normalizeAddr(prevDelivery.address) === normalizeAddr(customerAddress)) ||
+      (prevDelivery.locationLink && locationLink && prevDelivery.locationLink === locationLink))
   );
   const isAdditionalDeliveryInSession =
-    orderType === 'delivery' && orderIds.length > 0 && sameAddressAsPrevious;
+    orderType === 'delivery' && orderIds.length > 0 && sameLocationAsPrevious;
   const deliveryChargesForOrder =
     orderType === 'delivery' && !isAdditionalDeliveryInSession ? outletDeliveryCharges : 0;
   const taxPercentage = Number(outletSettings?.tax_rate) || 0;
