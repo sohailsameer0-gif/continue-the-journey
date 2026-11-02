@@ -1,4 +1,5 @@
-import { X, Minus, Plus, ShoppingBag, ArrowRight } from 'lucide-react';
+import { useState } from 'react';
+import { X, Minus, Plus, ShoppingBag, ArrowRight, MapPin } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -52,6 +53,10 @@ export default function CartSheet({
   placing, onClose, onUpdateQty, onSetName, onSetPhone, onSetAddress, onSetLocationLink, onSetNotes,
   onSetVehicleNumber, onSetPickupTime, onPlaceOrder, isAdditionalOrder,
 }: CartSheetProps) {
+  // When the delivery location was already captured (welcome popup / earlier order)
+  // we show it as a confirmed summary card instead of demanding re-entry.
+  const hasDeliveryLocation = !!customerAddress.trim() || !!locationLink.trim();
+  const [editingLocation, setEditingLocation] = useState(false);
   const subtotal = cart.reduce((s, i) => s + i.price * i.quantity, 0);
   // For dine-in, tax & service charges are NOT shown to the customer at order time.
   // They are applied only on the final outlet bill (once on the combined subtotal).
@@ -72,7 +77,7 @@ export default function CartSheet({
     : '';
   const canPlace = cart.length > 0 && !placing &&
     (!needsCustomerInfo || (customerName && phoneValid)) &&
-    (!isDelivery || customerAddress);
+    (!isDelivery || hasDeliveryLocation);
 
   const orderLabel = orderType === 'dine_in' ? 'Dine-in' : orderType === 'takeaway' ? 'Takeaway' : 'Delivery';
 
@@ -140,10 +145,40 @@ export default function CartSheet({
               />
               {phoneError && <p className="text-[11px] text-destructive px-1">{phoneError}</p>}
               {isDelivery && (
-                <>
-                  <Textarea placeholder="Delivery Address *" value={customerAddress} onChange={e => onSetAddress(e.target.value)} className="rounded-xl min-h-[60px] bg-muted/50 border-border/50 focus:bg-background" />
-                  <Input placeholder="Google Maps Link (optional)" value={locationLink} onChange={e => onSetLocationLink(e.target.value)} className="rounded-xl h-11 bg-muted/50 border-border/50 focus:bg-background" />
-                </>
+                hasDeliveryLocation && !editingLocation ? (
+                  <div className="rounded-xl border border-primary/30 bg-primary/5 p-3">
+                    <div className="flex items-start gap-2.5">
+                      <MapPin className="h-4 w-4 text-primary mt-0.5 shrink-0" />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs font-semibold text-foreground">Delivery location confirmed</p>
+                        <p className="text-xs text-muted-foreground mt-0.5 break-words">
+                          {customerAddress.trim() || 'Live location shared via Google Maps'}
+                        </p>
+                        {locationLink.trim() && (
+                          <a
+                            href={locationLink}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="text-[11px] text-primary underline mt-1 inline-block"
+                          >
+                            View on Google Maps
+                          </a>
+                        )}
+                      </div>
+                      <button
+                        onClick={() => setEditingLocation(true)}
+                        className="text-[11px] font-semibold text-primary underline shrink-0"
+                      >
+                        Change
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    <Textarea placeholder="Delivery Address *" value={customerAddress} onChange={e => onSetAddress(e.target.value)} className="rounded-xl min-h-[60px] bg-muted/50 border-border/50 focus:bg-background" />
+                    <Input placeholder="Google Maps Link (optional)" value={locationLink} onChange={e => onSetLocationLink(e.target.value)} className="rounded-xl h-11 bg-muted/50 border-border/50 focus:bg-background" />
+                  </>
+                )
               )}
               {isTakeaway && (
                 <>
