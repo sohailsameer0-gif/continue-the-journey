@@ -1,4 +1,4 @@
-import { Plus, Minus } from 'lucide-react';
+import { Plus } from 'lucide-react';
 
 interface MenuItem {
   id: string;
@@ -13,95 +13,91 @@ interface MenuItem {
 interface MenuItemCardProps {
   item: MenuItem;
   quantity: number;
+  onOpen: () => void;
   onAdd: () => void;
-  onIncrement: () => void;
-  onDecrement: () => void;
 }
 
-const tagConfig: Record<string, { emoji: string; style: string }> = {
-  popular: { emoji: '🔥', style: 'bg-secondary/15 text-secondary border-secondary/30' },
-  spicy: { emoji: '🌶️', style: 'bg-destructive/10 text-destructive border-destructive/30' },
-  new: { emoji: '✨', style: 'bg-primary/10 text-primary border-primary/30' },
-  veg: { emoji: '🥬', style: 'bg-accent text-accent-foreground border-primary/30' },
-  bestseller: { emoji: '⭐', style: 'bg-secondary/15 text-secondary border-secondary/30' },
+const tagConfig: Record<string, { emoji: string }> = {
+  popular: { emoji: '🔥' },
+  spicy: { emoji: '🌶️' },
+  new: { emoji: '✨' },
+  veg: { emoji: '🥬' },
+  bestseller: { emoji: '⭐' },
 };
 
-export default function MenuItemCard({ item, quantity, onAdd, onIncrement, onDecrement }: MenuItemCardProps) {
+export default function MenuItemCard({ item, quantity, onOpen, onAdd }: MenuItemCardProps) {
   const hasDiscount = item.discounted_price != null && item.discounted_price < item.price;
   const displayPrice = hasDiscount ? item.discounted_price! : item.price;
   const discount = hasDiscount ? Math.round(((item.price - item.discounted_price!) / item.price) * 100) : 0;
 
   return (
-    <div className="group bg-card rounded-2xl border shadow-card hover:shadow-card-hover transition-all duration-300 overflow-hidden">
-      <div className="flex gap-0">
-        {/* Image */}
-        <div className="relative shrink-0 w-[110px] sm:w-[130px]">
-          <div className="h-full min-h-[120px]">
-            {item.image_url ? (
-              <img src={item.image_url} alt={item.name} className="w-full h-full object-cover" loading="lazy" />
-            ) : (
-              <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-muted via-muted to-accent/30">
-                <span className="text-4xl opacity-50">🍽️</span>
-              </div>
-            )}
+    <div
+      onClick={onOpen}
+      role="button"
+      tabIndex={0}
+      onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onOpen(); } }}
+      className="group bg-card rounded-2xl border shadow-card hover:shadow-card-hover active:scale-[0.98] transition-all duration-200 overflow-hidden cursor-pointer flex flex-col text-left"
+    >
+      {/* Image */}
+      <div className="relative aspect-[4/3] overflow-hidden">
+        {item.image_url ? (
+          <img
+            src={item.image_url}
+            alt={item.name}
+            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+            loading="lazy"
+          />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-muted via-muted to-accent/30">
+            <span className="text-4xl opacity-50">🍽️</span>
           </div>
+        )}
+
+        {hasDiscount && (
+          <span className="absolute top-2 left-2 bg-destructive text-destructive-foreground text-[10px] font-bold px-2 py-0.5 rounded-full shadow-md">
+            DEAL · {discount}% OFF
+          </span>
+        )}
+
+        {quantity > 0 && (
+          <span className="absolute top-2 right-2 bg-primary text-primary-foreground text-[10px] font-bold h-5 min-w-5 px-1.5 rounded-full flex items-center justify-center shadow-md">
+            {quantity}
+          </span>
+        )}
+
+        {/* Add button */}
+        <button
+          onClick={e => { e.stopPropagation(); onAdd(); }}
+          aria-label={`Add ${item.name} to cart`}
+          className="absolute bottom-2 right-2 h-9 w-9 rounded-full bg-primary text-primary-foreground shadow-lg flex items-center justify-center hover:scale-110 active:scale-95 transition-transform"
+        >
+          <Plus className="h-4.5 w-4.5" />
+        </button>
+      </div>
+
+      {/* Content */}
+      <div className="p-3 flex flex-col gap-1 flex-1">
+        <h3 className="font-heading font-bold text-sm text-foreground leading-snug line-clamp-1">{item.name}</h3>
+        {item.description && (
+          <p className="text-[11px] text-muted-foreground line-clamp-2 leading-relaxed">{item.description}</p>
+        )}
+        {item.tags && item.tags.length > 0 && (
+          <div className="flex gap-1 flex-wrap mt-0.5">
+            {item.tags.slice(0, 2).map(t => {
+              const cfg = tagConfig[t.toLowerCase()] || { emoji: '🏷️' };
+              return (
+                <span key={t} className="text-[10px] font-medium text-muted-foreground bg-muted px-1.5 py-0.5 rounded-full inline-flex items-center gap-0.5">
+                  {cfg.emoji} {t}
+                </span>
+              );
+            })}
+          </div>
+        )}
+        <div className="flex items-baseline gap-1.5 mt-auto pt-1.5">
+          <span className="font-heading font-extrabold text-base text-foreground">Rs.{displayPrice.toLocaleString()}</span>
           {hasDiscount && (
-            <div className="absolute top-2 left-2 bg-destructive text-destructive-foreground text-[10px] font-bold px-2 py-0.5 rounded-full shadow-sm">
-              {discount}% OFF
-            </div>
+            <span className="line-through text-[11px] text-muted-foreground/60">Rs.{item.price.toLocaleString()}</span>
           )}
-        </div>
-
-        {/* Content */}
-        <div className="flex-1 min-w-0 p-3 flex flex-col justify-between">
-          <div>
-            {/* Tags */}
-            {item.tags && item.tags.length > 0 && (
-              <div className="flex gap-1 mb-1.5 flex-wrap">
-                {item.tags.map(t => {
-                  const cfg = tagConfig[t.toLowerCase()] || { emoji: '🏷️', style: 'bg-muted text-muted-foreground border-border' };
-                  return (
-                    <span key={t} className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full border inline-flex items-center gap-0.5 ${cfg.style}`}>
-                      {cfg.emoji} {t}
-                    </span>
-                  );
-                })}
-              </div>
-            )}
-            <h3 className="font-heading font-bold text-sm text-foreground leading-snug line-clamp-1">{item.name}</h3>
-            {item.description && (
-              <p className="text-[11px] text-muted-foreground mt-0.5 line-clamp-2 leading-relaxed">{item.description}</p>
-            )}
-          </div>
-
-          {/* Price + Cart */}
-          <div className="flex items-center justify-between mt-2.5">
-            <div className="flex items-baseline gap-1.5">
-              <span className="font-heading font-extrabold text-base text-foreground">Rs.{displayPrice}</span>
-              {hasDiscount && (
-                <span className="line-through text-[11px] text-muted-foreground/60">Rs.{item.price}</span>
-              )}
-            </div>
-
-            {quantity > 0 ? (
-              <div className="flex items-center gap-0.5 bg-primary rounded-full shadow-md">
-                <button onClick={onDecrement} aria-label="Decrease quantity" className="h-8 w-8 rounded-full flex items-center justify-center text-primary-foreground hover:bg-primary-foreground/10 active:scale-90 transition-all">
-                  <Minus className="h-3.5 w-3.5" />
-                </button>
-                <span className="font-bold text-sm w-6 text-center text-primary-foreground">{quantity}</span>
-                <button onClick={onIncrement} aria-label="Increase quantity" className="h-8 w-8 rounded-full flex items-center justify-center text-primary-foreground hover:bg-primary-foreground/10 active:scale-90 transition-all">
-                  <Plus className="h-3.5 w-3.5" />
-                </button>
-              </div>
-            ) : (
-              <button
-                onClick={onAdd}
-                className="flex items-center gap-1 px-4 py-2 rounded-full bg-primary text-primary-foreground text-xs font-bold shadow-md hover:shadow-lg active:scale-95 transition-all"
-              >
-                <Plus className="h-3.5 w-3.5" /> ADD
-              </button>
-            )}
-          </div>
         </div>
       </div>
     </div>
