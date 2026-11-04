@@ -6,6 +6,7 @@ import { toast } from 'sonner';
 import { ShoppingBag, Search, X } from 'lucide-react';
 import MenuHeader from '@/components/public-menu/MenuHeader';
 import MenuItemCard from '@/components/public-menu/MenuItemCard';
+import ItemDetailSheet from '@/components/public-menu/ItemDetailSheet';
 import CartSheet, { type CartItem } from '@/components/public-menu/CartSheet';
 import OrderTracking from '@/components/public-menu/OrderTracking';
 import WelcomeLocationPopup from '@/components/public-menu/WelcomeLocationPopup';
@@ -152,6 +153,9 @@ export default function PublicMenu() {
       }
     });
   }, []);
+  // Item detail popup (Mr.Cod-style): full image, description, variant/size
+  // options and a quantity stepper before the customer adds to cart.
+  const [detailItem, setDetailItem] = useState<any>(null);
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const categoryRef = useRef<HTMLDivElement>(null);
@@ -179,16 +183,28 @@ export default function PublicMenu() {
     if (menu?.categories?.[0] && !activeCategory) setActiveCategory(menu.categories[0].id);
   }, [menu]);
 
-  const addToCart = (item: { id: string; name: string; price: number; discounted_price?: number | null; image_url?: string | null }) => {
+  // Variant-aware add: a cart line is keyed by item id (+ variant id when a
+  // size/option is chosen) so different options of the same item are separate
+  // lines, while the original menu item id is preserved for order_items and
+  // inventory deduction.
+  const addToCart = (
+    item: { id: string; name: string; price: number; discounted_price?: number | null; image_url?: string | null },
+    quantity = 1,
+    variant: { id: string; label: string; price: number } | null = null,
+  ) => {
     if (orderingBlocked) {
       toast.error('Online ordering is temporarily unavailable for this restaurant.');
       return;
     }
-    const price = item.discounted_price || item.price;
+    const price = variant ? variant.price : (item.discounted_price || item.price);
+    const lineId = variant ? `${item.id}:${variant.id}` : item.id;
+    const name = variant && !item.name.toLowerCase().includes(variant.label.toLowerCase())
+      ? `${item.name} — ${variant.label}`
+      : item.name;
     setCart(c => {
-      const existing = c.find(i => i.id === item.id);
-      if (existing) return c.map(i => i.id === item.id ? { ...i, quantity: i.quantity + 1 } : i);
-      return [...c, { id: item.id, name: item.name, price, quantity: 1, image_url: item.image_url }];
+      const existing = c.find(i => i.id === lineId);
+      if (existing) return c.map(i => i.id === lineId ? { ...i, quantity: i.quantity + quantity } : i);
+      return [...c, { id: lineId, menuItemId: item.id, name, price, quantity, image_url: item.image_url }];
     });
   };
 
@@ -255,7 +271,7 @@ export default function PublicMenu() {
       if (error) throw error;
 
       const items = cart.map(i => ({
-        order_id: order.id, menu_item_id: i.id, name: i.name,
+        order_id: order.id, menu_item_id: i.menuItemId || i.id, name: i.name,
         quantity: i.quantity, price: i.price,
       }));
       await supabase.from('order_items').insert(items);
@@ -467,33 +483,57 @@ export default function PublicMenu() {
       </div>
 
       {/* Menu Items */}
-      <div className="p-4 space-y-3">
+      <div className="p-4 grid grid-cols-2 gap-3">
         {!searchQuery && activeCatName && (
-          <h2 className="font-heading font-bold text-base text-foreground">{activeCatName}</h2>
+          <h2 className="col-span-2 font-heading font-bold text-base text-foreground">{activeCatName}</h2>
         )}
         {searchQuery && (
-          <p className="text-xs text-muted-foreground mb-1">
+          <p className="col-span-2 text-xs text-muted-foreground mb-1">
             {displayItems.length} result{displayItems.length !== 1 ? 's' : ''} for "{searchQuery}"
           </p>
         )}
         {displayItems.length === 0 && (
-          <div className="text-center py-16">
+          <div className="col-span-2 text-center py-16">
             <p className="text-4xl mb-3">🔍</p>
             <p className="text-sm font-medium text-foreground">{searchQuery ? 'No items found' : 'No items yet'}</p>
             <p className="text-xs text-muted-foreground mt-1">{searchQuery ? 'Try a different search' : 'Check back soon!'}</p>
           </div>
         )}
         {displayItems.map(item => {
-          const inCart = cart.find(c => c.id === item.id);
+          const inCart = cart.find(c => c.menuItemId === item.id);
+          const itemVariants = (menu?.variants || []).filter((v: any) => v.menu_item_id === item.id);
+          const hasVariants = itemVariants.length > 0;
           return (
             <MenuItemCard
               key={item.id} item={item} quantity={inCart?.quantity || 0}
-              onAdd={() => addToCart(item)} onIncrement={() => updateQty(item.id, 1)} onDecrement={() => updateQty(item.id, -1)}
+              onOpen={() => setDetailItem(item)}
+              onAdd={() => {
+                // Items with size/option choices open the detail popup so the
+                // customer picks one; simple items add straight to the cart.
+                if (hasVariants) setDetailItem(item);
+                else addToCart(item);
+              }}
             />
           );
         })}
       </div>
       </main>
+
+      {/* Item detail popup */}
+      {detailItem && (
+        <ItemDetailSheet
+          item={detailItem}
+          variants={(menu?.variants || [])
+            .filter((v: any) => v.menu_item_id === detailItem.id)
+            .map((v: any) => ({ id: v.id, label: v.label, price: Number(v.price) }))}
+          onAdd={({ quantity, variant }) => {
+            addToCart(detailItem, quantity, variant);
+            setDetailItem(null);
+            toast.success(`${detailItem.name} added to cart`);
+          }}
+          onClose={() => setDetailItem(null)}
+        />
+      )}
 
       {/* Floating Cart Button */}
       {cartCount > 0 && !showCart && (

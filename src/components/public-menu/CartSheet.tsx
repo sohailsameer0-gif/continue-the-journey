@@ -11,6 +11,10 @@ const isValidPkPhone = (raw: string) => {
 
 export interface CartItem {
   id: string;
+  // Original menu_items.id — kept separate because a cart line id may carry a
+  // variant suffix (e.g. "<itemId>:<variantId>") when the customer picked a
+  // size/option in the item detail popup.
+  menuItemId?: string;
   name: string;
   price: number;
   quantity: number;
