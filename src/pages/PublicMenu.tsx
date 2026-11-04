@@ -483,31 +483,55 @@ export default function PublicMenu() {
       {/* Menu Items */}
       <div className="p-4 space-y-3">
         {!searchQuery && activeCatName && (
-          <h2 className="font-heading font-bold text-base text-foreground">{activeCatName}</h2>
+          <h2 className="col-span-2 font-heading font-bold text-base text-foreground">{activeCatName}</h2>
         )}
         {searchQuery && (
-          <p className="text-xs text-muted-foreground mb-1">
+          <p className="col-span-2 text-xs text-muted-foreground mb-1">
             {displayItems.length} result{displayItems.length !== 1 ? 's' : ''} for "{searchQuery}"
           </p>
         )}
         {displayItems.length === 0 && (
-          <div className="text-center py-16">
+          <div className="col-span-2 text-center py-16">
             <p className="text-4xl mb-3">🔍</p>
             <p className="text-sm font-medium text-foreground">{searchQuery ? 'No items found' : 'No items yet'}</p>
             <p className="text-xs text-muted-foreground mt-1">{searchQuery ? 'Try a different search' : 'Check back soon!'}</p>
           </div>
         )}
         {displayItems.map(item => {
-          const inCart = cart.find(c => c.id === item.id);
+          const inCart = cart.find(c => c.menuItemId === item.id);
+          const itemVariants = (menu?.variants || []).filter((v: any) => v.menu_item_id === item.id);
+          const hasVariants = itemVariants.length > 0;
           return (
             <MenuItemCard
               key={item.id} item={item} quantity={inCart?.quantity || 0}
-              onAdd={() => addToCart(item)} onIncrement={() => updateQty(item.id, 1)} onDecrement={() => updateQty(item.id, -1)}
+              onOpen={() => setDetailItem(item)}
+              onAdd={() => {
+                // Items with size/option choices open the detail popup so the
+                // customer picks one; simple items add straight to the cart.
+                if (hasVariants) setDetailItem(item);
+                else addToCart(item);
+              }}
             />
           );
         })}
       </div>
       </main>
+
+      {/* Item detail popup */}
+      {detailItem && (
+        <ItemDetailSheet
+          item={detailItem}
+          variants={(menu?.variants || [])
+            .filter((v: any) => v.menu_item_id === detailItem.id)
+            .map((v: any) => ({ id: v.id, label: v.label, price: Number(v.price) }))}
+          onAdd={({ quantity, variant }) => {
+            addToCart(detailItem, quantity, variant);
+            setDetailItem(null);
+            toast.success(`${detailItem.name} added to cart`);
+          }}
+          onClose={() => setDetailItem(null)}
+        />
+      )}
 
       {/* Floating Cart Button */}
       {cartCount > 0 && !showCart && (
