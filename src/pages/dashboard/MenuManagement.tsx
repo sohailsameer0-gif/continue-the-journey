@@ -4,6 +4,7 @@ import { useMenuItemVariants, useReplaceVariants, useUpdateInventory, useInvento
 import { useResolvedSubscription } from '@/hooks/useSubscription';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -363,7 +364,7 @@ export default function MenuManagement() {
               {renderInventoryEditor('add', itemForm)}
               <div className="space-y-2">
                 <Label>Description</Label>
-                <Input value={itemForm.description} onChange={e => setItemForm(f => ({ ...f, description: e.target.value }))} />
+                <Textarea value={itemForm.description} onChange={e => setItemForm(f => ({ ...f, description: e.target.value }))} rows={3} placeholder="Item description (appears on the public menu)" className="resize-none" />
               </div>
               <div className="space-y-2">
                 <Label>Item Image</Label>
@@ -416,7 +417,7 @@ export default function MenuManagement() {
                             {item.tags.map(t => <Badge key={t} variant="secondary" className="text-[10px]">{t}</Badge>)}
                           </div>
                         )}
-                        {item.description && <p className="text-xs text-muted-foreground line-clamp-2 mt-1">{item.description}</p>}
+                        {item.description && <p className="text-xs text-muted-foreground whitespace-pre-line mt-1">{item.description}</p>}
                       </div>
                       </div>
                       <div className="flex items-center justify-between sm:justify-end gap-3 sm:gap-4 sm:shrink-0">
@@ -488,7 +489,7 @@ export default function MenuManagement() {
             {renderInventoryEditor('edit', editForm)}
             <div className="space-y-2">
               <Label>Description</Label>
-              <Input value={editForm.description} onChange={e => setEditForm(f => ({ ...f, description: e.target.value }))} />
+              <Textarea value={editForm.description} onChange={e => setEditForm(f => ({ ...f, description: e.target.value }))} rows={3} placeholder="Item description (appears on the public menu)" className="resize-none" />
             </div>
             <div className="space-y-2">
               <Label>Item Image</Label>
