@@ -153,6 +153,9 @@ export default function PublicMenu() {
       }
     });
   }, []);
+  // Item detail popup (Mr.Cod-style): full image, description, variant/size
+  // options and a quantity stepper before the customer adds to cart.
+  const [detailItem, setDetailItem] = useState<any>(null);
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const categoryRef = useRef<HTMLDivElement>(null);
@@ -266,7 +269,7 @@ export default function PublicMenu() {
       if (error) throw error;
 
       const items = cart.map(i => ({
-        order_id: order.id, menu_item_id: i.id, name: i.name,
+        order_id: order.id, menu_item_id: i.menuItemId || i.id, name: i.name,
         quantity: i.quantity, price: i.price,
       }));
       await supabase.from('order_items').insert(items);
