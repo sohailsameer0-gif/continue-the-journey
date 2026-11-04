@@ -6,6 +6,7 @@ import { toast } from 'sonner';
 import { ShoppingBag, Search, X } from 'lucide-react';
 import MenuHeader from '@/components/public-menu/MenuHeader';
 import MenuItemCard from '@/components/public-menu/MenuItemCard';
+import ItemDetailSheet from '@/components/public-menu/ItemDetailSheet';
 import CartSheet, { type CartItem } from '@/components/public-menu/CartSheet';
 import OrderTracking from '@/components/public-menu/OrderTracking';
 import WelcomeLocationPopup from '@/components/public-menu/WelcomeLocationPopup';
@@ -179,16 +180,26 @@ export default function PublicMenu() {
     if (menu?.categories?.[0] && !activeCategory) setActiveCategory(menu.categories[0].id);
   }, [menu]);
 
-  const addToCart = (item: { id: string; name: string; price: number; discounted_price?: number | null; image_url?: string | null }) => {
+  // Variant-aware add: a cart line is keyed by item id (+ variant id when a
+  // size/option is chosen) so different options of the same item are separate
+  // lines, while the original menu item id is preserved for order_items and
+  // inventory deduction.
+  const addToCart = (
+    item: { id: string; name: string; price: number; discounted_price?: number | null; image_url?: string | null },
+    quantity = 1,
+    variant: { id: string; label: string; price: number } | null = null,
+  ) => {
     if (orderingBlocked) {
       toast.error('Online ordering is temporarily unavailable for this restaurant.');
       return;
     }
-    const price = item.discounted_price || item.price;
+    const price = variant ? variant.price : (item.discounted_price || item.price);
+    const lineId = variant ? `${item.id}:${variant.id}` : item.id;
+    const name = variant ? `${item.name} — ${variant.label}` : item.name;
     setCart(c => {
-      const existing = c.find(i => i.id === item.id);
-      if (existing) return c.map(i => i.id === item.id ? { ...i, quantity: i.quantity + 1 } : i);
-      return [...c, { id: item.id, name: item.name, price, quantity: 1, image_url: item.image_url }];
+      const existing = c.find(i => i.id === lineId);
+      if (existing) return c.map(i => i.id === lineId ? { ...i, quantity: i.quantity + quantity } : i);
+      return [...c, { id: lineId, menuItemId: item.id, name, price, quantity, image_url: item.image_url }];
     });
   };
 
