@@ -198,7 +198,9 @@ export default function PublicMenu() {
     }
     const price = variant ? variant.price : (item.discounted_price || item.price);
     const lineId = variant ? `${item.id}:${variant.id}` : item.id;
-    const name = variant ? `${item.name} — ${variant.label}` : item.name;
+    const name = variant && !item.name.toLowerCase().includes(variant.label.toLowerCase())
+      ? `${item.name} — ${variant.label}`
+      : item.name;
     setCart(c => {
       const existing = c.find(i => i.id === lineId);
       if (existing) return c.map(i => i.id === lineId ? { ...i, quantity: i.quantity + quantity } : i);
