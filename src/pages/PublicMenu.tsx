@@ -481,7 +481,7 @@ export default function PublicMenu() {
       </div>
 
       {/* Menu Items */}
-      <div className="p-4 space-y-3">
+      <div className="p-4 grid grid-cols-2 gap-3">
         {!searchQuery && activeCatName && (
           <h2 className="col-span-2 font-heading font-bold text-base text-foreground">{activeCatName}</h2>
         )}
