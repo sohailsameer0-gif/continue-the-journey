@@ -57,6 +57,55 @@
       "when": 1793959803771,
       "tag": "0007_diag_storage_uid",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1793960459803,
+      "tag": "0008_diag_storage_exists",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1793960482115,
+      "tag": "0009_fix_storage_owner_policies",
+      "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1793960497995,
+      "tag": "0010_diag_storage_hasrole",
+      "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1793960530130,
+      "tag": "0011_diag_storage_hasrole_top",
+      "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1793960546988,
+      "tag": "0012_diag_storage_hasrole_not",
+      "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1793960565346,
+      "tag": "0013_diag_storage_or_top",
+      "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1793960633511,
+      "tag": "0014_diag_storage_qualified",
+      "breakpoints": true
     }
   ]
 }
