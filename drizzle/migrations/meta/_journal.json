@@ -78,6 +78,13 @@
       "when": 1793960497995,
       "tag": "0010_diag_storage_hasrole",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1793960530130,
+      "tag": "0011_diag_storage_hasrole_top",
+      "breakpoints": true
     }
   ]
 }
