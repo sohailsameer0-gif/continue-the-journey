@@ -50,6 +50,13 @@
       "when": 1793878788709,
       "tag": "0006_diag_storage_insert",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1793959803771,
+      "tag": "0007_diag_storage_uid",
+      "breakpoints": true
     }
   ]
 }
