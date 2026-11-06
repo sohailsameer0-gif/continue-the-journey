@@ -71,6 +71,13 @@
       "when": 1793960482115,
       "tag": "0009_fix_storage_owner_policies",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1793960497995,
+      "tag": "0010_diag_storage_hasrole",
+      "breakpoints": true
     }
   ]
 }
