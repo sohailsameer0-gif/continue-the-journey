@@ -1328,6 +1328,7 @@ export type Database = {
         }
         Returns: Json
       }
+      can_manage_outlet_file: { Args: { _path: string }; Returns: boolean }
       customer_cancel_orders: {
         Args: {
           _details?: string
